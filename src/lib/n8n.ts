@@ -36,6 +36,19 @@ export function sanitizeWebhookUrl(raw: string): string | null {
 
 export type N8nResult = { status: number; ok: boolean; text: string; viaProxy: boolean };
 
+/** شکل تحلیل دریافتی از n8n؛ فیلدهای متادیتا اختیاری هستند. */
+export type N8nAnalysis = {
+  id?: string;
+  project_code?: string;
+  single_page_summary: string;
+  detailed_report: string;
+  created_at?: string;
+};
+
+function isBrowser() {
+  return typeof window !== "undefined";
+}
+
 /**
  * ارسال درخواست به n8n؛ ابتدا مستقیم از مرورگر و در صورت خطای CORS/شبکه،
  * دوباره از طریق پروکسی سمت سرور.
@@ -80,14 +93,52 @@ export async function postToN8n(
   return { status: response.status, ok: response.ok, text, viaProxy: true };
 }
 
+export const VARIANCE_STORAGE_KEY = "n8n_variance_result";
 
-export type N8nAnalysis = {
-  single_page_summary: string;
-  detailed_report: string;
-};
+export function saveVariance(analysis: N8nAnalysis) {
+  if (!isBrowser()) return;
+  localStorage.setItem(VARIANCE_STORAGE_KEY, JSON.stringify(analysis));
+}
 
-function isBrowser() {
-  return typeof window !== "undefined";
+export function getVariance(): N8nAnalysis | null {
+  if (!isBrowser()) return null;
+  const raw = localStorage.getItem(VARIANCE_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<N8nAnalysis>;
+    return {
+      id: typeof parsed.id === "string" ? parsed.id : undefined,
+      project_code: typeof parsed.project_code === "string" ? parsed.project_code : undefined,
+      single_page_summary: String(parsed.single_page_summary ?? ""),
+      detailed_report: String(parsed.detailed_report ?? ""),
+      created_at: typeof parsed.created_at === "string" ? parsed.created_at : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function saveAnalysis(analysis: N8nAnalysis) {
+  if (!isBrowser()) return;
+  localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(analysis));
+}
+
+export function getAnalysis(): N8nAnalysis | null {
+  if (!isBrowser()) return null;
+  const raw = localStorage.getItem(ANALYSIS_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<N8nAnalysis>;
+    return {
+      id: typeof parsed.id === "string" ? parsed.id : undefined,
+      project_code: typeof parsed.project_code === "string" ? parsed.project_code : undefined,
+      single_page_summary: String(parsed.single_page_summary ?? ""),
+      detailed_report: String(parsed.detailed_report ?? ""),
+      created_at: typeof parsed.created_at === "string" ? parsed.created_at : undefined,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function getWebhookUrl() {
@@ -110,46 +161,30 @@ export function setProjectCode(code: string) {
   localStorage.setItem(PROJECT_CODE_STORAGE_KEY, code.trim());
 }
 
-export function saveAnalysis(analysis: N8nAnalysis) {
-  if (!isBrowser()) return;
-  localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(analysis));
-}
+/** استخراج فیلدهای تحلیل از پاسخ n8n (آرایه یا آبجکت) */
+export function normalizeAnalysisResponse(payload: unknown): N8nAnalysis | null {
+  const candidate = Array.isArray(payload) ? payload[0] : payload;
+  if (!candidate || typeof candidate !== "object") return null;
+  const record = candidate as Record<string, unknown>;
+  const inner =
+    record["single_page_summary"] === undefined && record["json"] && typeof record["json"] === "object"
+      ? (record["json"] as Record<string, unknown>)
+      : record;
 
-export function getAnalysis(): N8nAnalysis | null {
-  if (!isBrowser()) return null;
-  const raw = localStorage.getItem(ANALYSIS_STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as Partial<N8nAnalysis>;
-    return {
-      single_page_summary: String(parsed.single_page_summary ?? ""),
-      detailed_report: String(parsed.detailed_report ?? ""),
-    };
-  } catch {
-    return null;
-  }
-}
+  const summary = inner["single_page_summary"];
+  const detailed = inner["detailed_report"];
+  if (summary === undefined && detailed === undefined) return null;
 
-export const VARIANCE_STORAGE_KEY = "n8n_variance_result";
+  const toText = (value: unknown) =>
+    typeof value === "string" ? value : value == null ? "" : JSON.stringify(value, null, 2);
 
-export function saveVariance(analysis: N8nAnalysis) {
-  if (!isBrowser()) return;
-  localStorage.setItem(VARIANCE_STORAGE_KEY, JSON.stringify(analysis));
-}
-
-export function getVariance(): N8nAnalysis | null {
-  if (!isBrowser()) return null;
-  const raw = localStorage.getItem(VARIANCE_STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as Partial<N8nAnalysis>;
-    return {
-      single_page_summary: String(parsed.single_page_summary ?? ""),
-      detailed_report: String(parsed.detailed_report ?? ""),
-    };
-  } catch {
-    return null;
-  }
+  return {
+    id: typeof inner["id"] === "string" ? inner["id"] : undefined,
+    project_code: typeof inner["project_code"] === "string" ? inner["project_code"] : undefined,
+    single_page_summary: toText(summary),
+    detailed_report: toText(detailed),
+    created_at: typeof inner["created_at"] === "string" ? inner["created_at"] : undefined,
+  };
 }
 
 /**
@@ -188,29 +223,6 @@ export function normalizeFlexibleAnalysis(payload: unknown): N8nAnalysis | null 
   return null;
 }
 
-/** استخراج فیلدهای تحلیل از پاسخ n8n (آرایه یا آبجکت) */
-export function normalizeAnalysisResponse(payload: unknown): N8nAnalysis | null {
-  const candidate = Array.isArray(payload) ? payload[0] : payload;
-  if (!candidate || typeof candidate !== "object") return null;
-  const record = candidate as Record<string, unknown>;
-  const inner =
-    record["single_page_summary"] === undefined && record["json"] && typeof record["json"] === "object"
-      ? (record["json"] as Record<string, unknown>)
-      : record;
-
-  const summary = inner["single_page_summary"];
-  const detailed = inner["detailed_report"];
-  if (summary === undefined && detailed === undefined) return null;
-
-  const toText = (value: unknown) =>
-    typeof value === "string" ? value : value == null ? "" : JSON.stringify(value, null, 2);
-
-  return {
-    single_page_summary: toText(summary),
-    detailed_report: toText(detailed),
-  };
-}
-
 /** ارسال فایل بیس‌لاین به وب‌هوک n8n و دریافت تحلیل */
 export async function sendBaselineToN8n(file: File): Promise<N8nAnalysis> {
   const webhookUrl = getWebhookUrl();
@@ -247,4 +259,3 @@ export async function sendBaselineToN8n(file: File): Promise<N8nAnalysis> {
   }
   return analysis;
 }
-
