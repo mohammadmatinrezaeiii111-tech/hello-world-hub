@@ -10,33 +10,220 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as PmRouteImport } from './routes/pm'
+import { Route as RoleSelectRouteImport } from './routes/role-select'
+import { Route as ClientProjectNewRouteImport } from './routes/client.project-new'
+import { Route as PmIndexRouteImport } from './routes/pm.index'
+import { Route as PmAgentRouteImport } from './routes/pm.agent'
+import { Route as PmAiAnalysisRouteImport } from './routes/pm.ai-analysis'
+import { Route as PmAnalysisRouteImport } from './routes/pm.analysis'
+import { Route as PmBlockersRouteImport } from './routes/pm.blockers'
+import { Route as PmDashboardRouteImport } from './routes/pm.dashboard'
+import { Route as PmTasksRouteImport } from './routes/pm.tasks'
+import { Route as PmUploadRouteImport } from './routes/pm.upload'
+import { Route as ApiPublicN8nProxyRouteImport } from './routes/api/public/n8n-proxy'
+import { Route as PmSettingsIntegrationsRouteImport } from './routes/pm.settings.integrations'
+import { Route as PmTaskIdRouteImport } from './routes/pm.task.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PmRoute = PmRouteImport.update({
+  id: '/pm',
+  path: '/pm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoleSelectRoute = RoleSelectRouteImport.update({
+  id: '/role-select',
+  path: '/role-select',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientProjectNewRoute = ClientProjectNewRouteImport.update({
+  id: '/client/project-new',
+  path: '/client/project-new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PmIndexRoute = PmIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PmRoute,
+} as any)
+const PmAgentRoute = PmAgentRouteImport.update({
+  id: '/agent',
+  path: '/agent',
+  getParentRoute: () => PmRoute,
+} as any)
+const PmAiAnalysisRoute = PmAiAnalysisRouteImport.update({
+  id: '/ai-analysis',
+  path: '/ai-analysis',
+  getParentRoute: () => PmRoute,
+} as any)
+const PmAnalysisRoute = PmAnalysisRouteImport.update({
+  id: '/analysis',
+  path: '/analysis',
+  getParentRoute: () => PmRoute,
+} as any)
+const PmBlockersRoute = PmBlockersRouteImport.update({
+  id: '/blockers',
+  path: '/blockers',
+  getParentRoute: () => PmRoute,
+} as any)
+const PmDashboardRoute = PmDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => PmRoute,
+} as any)
+const PmTasksRoute = PmTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => PmRoute,
+} as any)
+const PmUploadRoute = PmUploadRouteImport.update({
+  id: '/upload',
+  path: '/upload',
+  getParentRoute: () => PmRoute,
+} as any)
+const ApiPublicN8nProxyRoute = ApiPublicN8nProxyRouteImport.update({
+  id: '/api/public/n8n-proxy',
+  path: '/api/public/n8n-proxy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PmSettingsIntegrationsRoute = PmSettingsIntegrationsRouteImport.update({
+  id: '/settings/integrations',
+  path: '/settings/integrations',
+  getParentRoute: () => PmRoute,
+} as any)
+const PmTaskIdRoute = PmTaskIdRouteImport.update({
+  id: '/task/$id',
+  path: '/task/$id',
+  getParentRoute: () => PmRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/pm': typeof PmRouteWithChildren
+  '/role-select': typeof RoleSelectRoute
+  '/client/project-new': typeof ClientProjectNewRoute
+  '/pm/agent': typeof PmAgentRoute
+  '/pm/ai-analysis': typeof PmAiAnalysisRoute
+  '/pm/analysis': typeof PmAnalysisRoute
+  '/pm/blockers': typeof PmBlockersRoute
+  '/pm/dashboard': typeof PmDashboardRoute
+  '/pm/tasks': typeof PmTasksRoute
+  '/pm/upload': typeof PmUploadRoute
+  '/pm/': typeof PmIndexRoute
+  '/api/public/n8n-proxy': typeof ApiPublicN8nProxyRoute
+  '/pm/settings/integrations': typeof PmSettingsIntegrationsRoute
+  '/pm/task/$id': typeof PmTaskIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/role-select': typeof RoleSelectRoute
+  '/client/project-new': typeof ClientProjectNewRoute
+  '/pm/agent': typeof PmAgentRoute
+  '/pm/ai-analysis': typeof PmAiAnalysisRoute
+  '/pm/analysis': typeof PmAnalysisRoute
+  '/pm/blockers': typeof PmBlockersRoute
+  '/pm/dashboard': typeof PmDashboardRoute
+  '/pm/tasks': typeof PmTasksRoute
+  '/pm/upload': typeof PmUploadRoute
+  '/pm': typeof PmIndexRoute
+  '/api/public/n8n-proxy': typeof ApiPublicN8nProxyRoute
+  '/pm/settings/integrations': typeof PmSettingsIntegrationsRoute
+  '/pm/task/$id': typeof PmTaskIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/pm': typeof PmRouteWithChildren
+  '/role-select': typeof RoleSelectRoute
+  '/client/project-new': typeof ClientProjectNewRoute
+  '/pm/agent': typeof PmAgentRoute
+  '/pm/ai-analysis': typeof PmAiAnalysisRoute
+  '/pm/analysis': typeof PmAnalysisRoute
+  '/pm/blockers': typeof PmBlockersRoute
+  '/pm/dashboard': typeof PmDashboardRoute
+  '/pm/tasks': typeof PmTasksRoute
+  '/pm/upload': typeof PmUploadRoute
+  '/pm/': typeof PmIndexRoute
+  '/api/public/n8n-proxy': typeof ApiPublicN8nProxyRoute
+  '/pm/settings/integrations': typeof PmSettingsIntegrationsRoute
+  '/pm/task/$id': typeof PmTaskIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/pm'
+    | '/role-select'
+    | '/client/project-new'
+    | '/pm/agent'
+    | '/pm/ai-analysis'
+    | '/pm/analysis'
+    | '/pm/blockers'
+    | '/pm/dashboard'
+    | '/pm/tasks'
+    | '/pm/upload'
+    | '/pm/'
+    | '/api/public/n8n-proxy'
+    | '/pm/settings/integrations'
+    | '/pm/task/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/role-select'
+    | '/client/project-new'
+    | '/pm/agent'
+    | '/pm/ai-analysis'
+    | '/pm/analysis'
+    | '/pm/blockers'
+    | '/pm/dashboard'
+    | '/pm/tasks'
+    | '/pm/upload'
+    | '/pm'
+    | '/api/public/n8n-proxy'
+    | '/pm/settings/integrations'
+    | '/pm/task/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/pm'
+    | '/role-select'
+    | '/client/project-new'
+    | '/pm/agent'
+    | '/pm/ai-analysis'
+    | '/pm/analysis'
+    | '/pm/blockers'
+    | '/pm/dashboard'
+    | '/pm/tasks'
+    | '/pm/upload'
+    | '/pm/'
+    | '/api/public/n8n-proxy'
+    | '/pm/settings/integrations'
+    | '/pm/task/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRoute
+  PmRoute: typeof PmRouteWithChildren
+  RoleSelectRoute: typeof RoleSelectRoute
+  ClientProjectNewRoute: typeof ClientProjectNewRoute
+  ApiPublicN8nProxyRoute: typeof ApiPublicN8nProxyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +235,149 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pm': {
+      id: '/pm'
+      path: '/pm'
+      fullPath: '/pm'
+      preLoaderRoute: typeof PmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/role-select': {
+      id: '/role-select'
+      path: '/role-select'
+      fullPath: '/role-select'
+      preLoaderRoute: typeof RoleSelectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client/project-new': {
+      id: '/client/project-new'
+      path: '/client/project-new'
+      fullPath: '/client/project-new'
+      preLoaderRoute: typeof ClientProjectNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pm/': {
+      id: '/pm/'
+      path: '/'
+      fullPath: '/pm/'
+      preLoaderRoute: typeof PmIndexRouteImport
+      parentRoute: typeof PmRoute
+    }
+    '/pm/agent': {
+      id: '/pm/agent'
+      path: '/agent'
+      fullPath: '/pm/agent'
+      preLoaderRoute: typeof PmAgentRouteImport
+      parentRoute: typeof PmRoute
+    }
+    '/pm/ai-analysis': {
+      id: '/pm/ai-analysis'
+      path: '/ai-analysis'
+      fullPath: '/pm/ai-analysis'
+      preLoaderRoute: typeof PmAiAnalysisRouteImport
+      parentRoute: typeof PmRoute
+    }
+    '/pm/analysis': {
+      id: '/pm/analysis'
+      path: '/analysis'
+      fullPath: '/pm/analysis'
+      preLoaderRoute: typeof PmAnalysisRouteImport
+      parentRoute: typeof PmRoute
+    }
+    '/pm/blockers': {
+      id: '/pm/blockers'
+      path: '/blockers'
+      fullPath: '/pm/blockers'
+      preLoaderRoute: typeof PmBlockersRouteImport
+      parentRoute: typeof PmRoute
+    }
+    '/pm/dashboard': {
+      id: '/pm/dashboard'
+      path: '/dashboard'
+      fullPath: '/pm/dashboard'
+      preLoaderRoute: typeof PmDashboardRouteImport
+      parentRoute: typeof PmRoute
+    }
+    '/pm/tasks': {
+      id: '/pm/tasks'
+      path: '/tasks'
+      fullPath: '/pm/tasks'
+      preLoaderRoute: typeof PmTasksRouteImport
+      parentRoute: typeof PmRoute
+    }
+    '/pm/upload': {
+      id: '/pm/upload'
+      path: '/upload'
+      fullPath: '/pm/upload'
+      preLoaderRoute: typeof PmUploadRouteImport
+      parentRoute: typeof PmRoute
+    }
+    '/api/public/n8n-proxy': {
+      id: '/api/public/n8n-proxy'
+      path: '/api/public/n8n-proxy'
+      fullPath: '/api/public/n8n-proxy'
+      preLoaderRoute: typeof ApiPublicN8nProxyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pm/settings/integrations': {
+      id: '/pm/settings/integrations'
+      path: '/settings/integrations'
+      fullPath: '/pm/settings/integrations'
+      preLoaderRoute: typeof PmSettingsIntegrationsRouteImport
+      parentRoute: typeof PmRoute
+    }
+    '/pm/task/$id': {
+      id: '/pm/task/$id'
+      path: '/task/$id'
+      fullPath: '/pm/task/$id'
+      preLoaderRoute: typeof PmTaskIdRouteImport
+      parentRoute: typeof PmRoute
+    }
   }
 }
 
+interface PmRouteChildren {
+  PmAgentRoute: typeof PmAgentRoute
+  PmAiAnalysisRoute: typeof PmAiAnalysisRoute
+  PmAnalysisRoute: typeof PmAnalysisRoute
+  PmBlockersRoute: typeof PmBlockersRoute
+  PmDashboardRoute: typeof PmDashboardRoute
+  PmTasksRoute: typeof PmTasksRoute
+  PmUploadRoute: typeof PmUploadRoute
+  PmIndexRoute: typeof PmIndexRoute
+  PmSettingsIntegrationsRoute: typeof PmSettingsIntegrationsRoute
+  PmTaskIdRoute: typeof PmTaskIdRoute
+}
+
+const PmRouteChildren: PmRouteChildren = {
+  PmAgentRoute: PmAgentRoute,
+  PmAiAnalysisRoute: PmAiAnalysisRoute,
+  PmAnalysisRoute: PmAnalysisRoute,
+  PmBlockersRoute: PmBlockersRoute,
+  PmDashboardRoute: PmDashboardRoute,
+  PmTasksRoute: PmTasksRoute,
+  PmUploadRoute: PmUploadRoute,
+  PmIndexRoute: PmIndexRoute,
+  PmSettingsIntegrationsRoute: PmSettingsIntegrationsRoute,
+  PmTaskIdRoute: PmTaskIdRoute,
+}
+
+const PmRouteWithChildren = PmRoute._addFileChildren(PmRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRoute,
+  PmRoute: PmRouteWithChildren,
+  RoleSelectRoute: RoleSelectRoute,
+  ClientProjectNewRoute: ClientProjectNewRoute,
+  ApiPublicN8nProxyRoute: ApiPublicN8nProxyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
