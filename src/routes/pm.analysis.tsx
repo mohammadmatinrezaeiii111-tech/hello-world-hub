@@ -1,11 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BrainCircuit, FileText, Loader as Loader2, RefreshCw, TriangleAlert } from "lucide-react";
+import {
+  BrainCircuit,
+  Calendar,
+  Hash,
+  Loader as Loader2,
+  RefreshCw,
+  ScrollText,
+  Sparkles,
+  TriangleAlert,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/pm/PmShell";
 import { EmptyState } from "@/components/pm/EmptyState";
 import { Markdown } from "@/components/pm/Markdown";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -19,15 +29,18 @@ import {
   postToN8n,
   sanitizeWebhookUrl,
 } from "@/lib/n8n";
+import { toPersianDateString } from "@/lib/persian";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/pm/analysis")({
   head: () => ({
     meta: [
-      { title: "تحلیل انحرافات و AI | پروژه‌یار" },
-      { name: "description", content: "تحلیل هوشمند انحرافات زمان‌بندی و ارزیابی مخاطرات." },
-      { property: "og:title", content: "تحلیل انحرافات و AI | پروژه‌یار" },
-      { property: "og:description", content: "تحلیل هوشمند انحرافات و مخاطرات زمان‌بندی." },
+      { title: "گزارش تحلیل هوش مصنوعی | پروژه‌یار" },
+      { name: "description", content: "گزارش تمیز و حرفه‌ای تحلیل انحرافات و وضعیت مدیریتی پروژه." },
+      { property: "og:title", content: "گزارش تحلیل هوش مصنوعی | پروژه‌یار" },
+      { property: "og:description", content: "گزارش تمیز و حرفه‌ای تحلیل انحرافات و وضعیت مدیریتی پروژه." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PmAnalysis,
@@ -66,39 +79,102 @@ async function fetchLatestReport(projectCode: string): Promise<N8nAnalysis | nul
   if (error) throw new Error("خواندن گزارش تحلیل از پایگاه‌داده انجام نشد.");
   if (!data) return null;
 
+  const record = data as Record<string, unknown>;
+  const asString = (value: unknown) => (typeof value === "string" ? value : undefined);
+
   return {
-    single_page_summary: String((data as Record<string, unknown>)["single_page_summary"] ?? ""),
-    detailed_report: String((data as Record<string, unknown>)["detailed_report"] ?? ""),
+    id: asString(record["id"]),
+    project_code: asString(record["project_code"]),
+    single_page_summary: String(record["single_page_summary"] ?? ""),
+    detailed_report: String(record["detailed_report"] ?? ""),
+    created_at: asString(record["created_at"]),
   };
 }
 
-/** نمایش دو بخش خلاصه و گزارش تفصیلی به صورت مارک‌داون */
-function AnalysisSections({ analysis }: { analysis: N8nAnalysis }) {
+/** نمایش تمیز و حرفه‌ای یک گزارش تحلیل: خلاصه مدیریتی، جزئیات تفصیلی و متادیتا */
+function ReportView({ analysis }: { analysis: N8nAnalysis }) {
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
-        <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-            <BrainCircuit className="h-5 w-5" aria-hidden />
+      {/* خلاصه وضعیت مدیریتی */}
+      <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.06] to-card p-5 shadow-sm sm:p-6">
+        <div className="relative flex items-center gap-3">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Sparkles className="h-6 w-6" aria-hidden />
           </span>
-          <h2 className="text-lg font-bold tracking-tight">خلاصه یک‌صفحه‌ای</h2>
+          <div>
+            <h2 className="text-lg font-bold tracking-tight">خلاصه وضعیت مدیریتی</h2>
+            <p className="text-xs text-muted-foreground">دیدگاه سطح بالای مدیر از وضعیت پروژه</p>
+          </div>
         </div>
-        <div className="mt-5">
+        <div className="relative mt-5">
           <Markdown>{analysis.single_page_summary}</Markdown>
         </div>
       </section>
 
+      {/* جزئیات انحرافات و تحلیل تفصیلی */}
       <section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-            <FileText className="h-5 w-5" aria-hidden />
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-secondary/15 text-success">
+            <ScrollText className="h-5 w-5" aria-hidden />
           </span>
-          <h2 className="text-lg font-bold tracking-tight">گزارش تفصیلی</h2>
+          <h2 className="text-lg font-bold tracking-tight">جزئیات انحرافات و تحلیل تفصیلی</h2>
         </div>
-        <div className="mt-5">
-          <Markdown>{analysis.detailed_report}</Markdown>
+        <div className="mt-5 rounded-xl border border-border bg-muted/50 p-4 sm:p-5">
+          <div
+            className="whitespace-pre-wrap text-sm leading-8 text-foreground"
+            dir="rtl"
+          >
+            {analysis.detailed_report}
+          </div>
         </div>
       </section>
+
+      {/* متادیتا */}
+      <footer className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <Hash className="h-3.5 w-3.5" aria-hidden />
+          <span>کد پروژه:</span>
+          <span className="font-medium text-foreground">{analysis.project_code ?? "—"}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5" aria-hidden />
+          <span>تاریخ ثبت تحلیل:</span>
+          <span className="font-medium text-foreground">{toPersianDateString(analysis.created_at)}</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function ReportSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.06] to-card p-5 shadow-sm sm:p-6">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-12 w-12 rounded-xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+        </div>
+        <Skeleton className="mt-5 h-4 w-full" />
+        <Skeleton className="mt-2 h-4 w-5/6" />
+        <Skeleton className="mt-2 h-4 w-4/6" />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-xl" />
+          <Skeleton className="h-5 w-56" />
+        </div>
+        <div className="mt-5 rounded-xl border border-border bg-muted/50 p-4 sm:p-5">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="mt-2 h-4 w-11/12" />
+          <Skeleton className="mt-2 h-4 w-3/4" />
+          <Skeleton className="mt-2 h-4 w-5/6" />
+          <Skeleton className="mt-2 h-4 w-2/3" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -107,7 +183,7 @@ function PmAnalysis() {
   const queryClient = useQueryClient();
   const [baseline, setBaseline] = useState<N8nAnalysis | null>(null);
   const [variance, setVariance] = useState<N8nAnalysis | null>(null);
-  const [tab, setTab] = useState<"baseline" | "variance">("baseline");
+  const [tab, setTab] = useState<"baseline" | "variance">("variance");
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [projectCode, setProjectCodeState] = useState<string | null>(null);
@@ -148,19 +224,23 @@ function PmAnalysis() {
   useEffect(() => {
     // تحلیل مبنا از پاسخ n8n که در مرحله آپلود ذخیره شده است
     const stored = getAnalysis();
-    if (hasContent(stored)) {
+    const hasBaseline = hasContent(stored);
+    if (hasBaseline) {
       setBaseline(stored);
-      setTab("baseline");
     }
 
     // آخرین گزارش انحرافات ذخیره‌شده در مرورگر
     const storedVariance = getVariance();
-    if (hasContent(storedVariance)) setVariance(storedVariance);
+    const hasVariance = hasContent(storedVariance);
+    if (hasVariance) setVariance(storedVariance);
+
+    // فعال کردن تبی که دارد؛ در غیر این صورت انحرافات (هدف اصلی صفحه) پیش‌فرض است
+    setTab(hasBaseline ? "baseline" : "variance");
 
     const code = getProjectCode();
     setProjectCodeState(code);
     if (!code) {
-      if (!hasContent(stored)) {
+      if (!hasBaseline && !hasVariance) {
         setErrorMessage("کد پروژه یافت نشد. ابتدا از صفحه انتخاب نقش کد پروژه را وارد کنید.");
       }
     }
@@ -234,8 +314,8 @@ function PmAnalysis() {
   return (
     <div>
       <PageHeader
-        title="تحلیل انحرافات و AI"
-        subtitle="نتیجه تحلیل برنامه مبنا و آخرین گزارش انحرافات این پروژه."
+        title="گزارش تحلیل هوش مصنوعی"
+        subtitle="خلاصه مدیریتی و گزارش تفصیلی تحلیل انحرافات پروژه."
       />
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -265,9 +345,8 @@ function PmAnalysis() {
       )}
 
       {isLoading ? (
-        <div className="mt-10 flex items-center justify-center gap-3 rounded-2xl border border-border bg-card p-10 text-sm text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-          در حال دریافت آخرین گزارش...
+        <div className="mt-10">
+          <ReportSkeleton />
         </div>
       ) : (
         <Tabs
@@ -287,7 +366,7 @@ function PmAnalysis() {
 
           <TabsContent value="baseline" className="mt-6">
             {hasContent(baseline) ? (
-              <AnalysisSections analysis={baseline} />
+              <ReportView analysis={baseline} />
             ) : (
               <EmptyState
                 icon={BrainCircuit}
@@ -299,7 +378,7 @@ function PmAnalysis() {
 
           <TabsContent value="variance" className="mt-6">
             {hasContent(variance) ? (
-              <AnalysisSections analysis={variance} />
+              <ReportView analysis={variance} />
             ) : (
               <EmptyState
                 icon={BrainCircuit}
