@@ -38,11 +38,11 @@ export type N8nResult = { status: number; ok: boolean; text: string; viaProxy: b
 
 /** شکل تحلیل دریافتی از n8n؛ فیلدهای متادیتا اختیاری هستند. */
 export type N8nAnalysis = {
-  id?: string;
-  project_code?: string;
+  id?: string | undefined;
+  project_code?: string | undefined;
   single_page_summary: string;
   detailed_report: string;
-  created_at?: string;
+  created_at?: string | undefined;
 };
 
 function isBrowser() {
