@@ -27,6 +27,10 @@ CREATE TABLE IF NOT EXISTS public.projects (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.projects TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.projects TO authenticated;
+GRANT ALL ON public.projects TO service_role;
+
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public can view projects" ON public.projects;
