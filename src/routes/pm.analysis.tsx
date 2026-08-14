@@ -183,7 +183,7 @@ function PmAnalysis() {
   const queryClient = useQueryClient();
   const [baseline, setBaseline] = useState<N8nAnalysis | null>(null);
   const [variance, setVariance] = useState<N8nAnalysis | null>(null);
-  const [tab, setTab] = useState<"baseline" | "variance">("baseline");
+  const [tab, setTab] = useState<"baseline" | "variance">("variance");
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [projectCode, setProjectCodeState] = useState<string | null>(null);
