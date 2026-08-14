@@ -224,19 +224,23 @@ function PmAnalysis() {
   useEffect(() => {
     // تحلیل مبنا از پاسخ n8n که در مرحله آپلود ذخیره شده است
     const stored = getAnalysis();
-    if (hasContent(stored)) {
+    const hasBaseline = hasContent(stored);
+    if (hasBaseline) {
       setBaseline(stored);
-      setTab("baseline");
     }
 
     // آخرین گزارش انحرافات ذخیره‌شده در مرورگر
     const storedVariance = getVariance();
-    if (hasContent(storedVariance)) setVariance(storedVariance);
+    const hasVariance = hasContent(storedVariance);
+    if (hasVariance) setVariance(storedVariance);
+
+    // فعال کردن تبی که دارد؛ در غیر این صورت انحرافات (هدف اصلی صفحه) پیش‌فرض است
+    setTab(hasBaseline ? "baseline" : "variance");
 
     const code = getProjectCode();
     setProjectCodeState(code);
     if (!code) {
-      if (!hasContent(stored)) {
+      if (!hasBaseline && !hasVariance) {
         setErrorMessage("کد پروژه یافت نشد. ابتدا از صفحه انتخاب نقش کد پروژه را وارد کنید.");
       }
     }
