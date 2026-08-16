@@ -9,10 +9,14 @@ import {
   Menu,
   Settings2,
   Upload,
+  UserRound,
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRole } from "@/context/RoleContext";
+import { useActiveProject } from "@/hooks/use-active-project";
+import { clearActiveProject, projectManagerName } from "@/lib/project";
 import { cn } from "@/lib/utils";
 
 const menu = [
