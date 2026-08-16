@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ManagerLoginRouteImport } from './routes/manager-login'
 import { Route as PmRouteImport } from './routes/pm'
 import { Route as ProjectNewRouteImport } from './routes/project-new'
 import { Route as RoleSelectRouteImport } from './routes/role-select'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManagerLoginRoute = ManagerLoginRouteImport.update({
+  id: '/manager-login',
+  path: '/manager-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PmRoute = PmRouteImport.update({
@@ -116,6 +122,7 @@ const PmTaskIdRoute = PmTaskIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/manager-login': typeof ManagerLoginRoute
   '/pm': typeof PmRouteWithChildren
   '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/manager-login': typeof ManagerLoginRoute
   '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
   '/client/project-new': typeof ClientProjectNewRoute
@@ -154,6 +162,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/manager-login': typeof ManagerLoginRoute
   '/pm': typeof PmRouteWithChildren
   '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/manager-login'
     | '/pm'
     | '/project-new'
     | '/role-select'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dashboard'
+    | '/manager-login'
     | '/project-new'
     | '/role-select'
     | '/client/project-new'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/dashboard'
+    | '/manager-login'
     | '/pm'
     | '/project-new'
     | '/role-select'
@@ -232,6 +244,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  ManagerLoginRoute: typeof ManagerLoginRoute
   PmRoute: typeof PmRouteWithChildren
   ProjectNewRoute: typeof ProjectNewRoute
   RoleSelectRoute: typeof RoleSelectRoute
@@ -253,6 +266,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manager-login': {
+      id: '/manager-login'
+      path: '/manager-login'
+      fullPath: '/manager-login'
+      preLoaderRoute: typeof ManagerLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pm': {
@@ -394,6 +414,7 @@ const PmRouteWithChildren = PmRoute._addFileChildren(PmRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  ManagerLoginRoute: ManagerLoginRoute,
   PmRoute: PmRouteWithChildren,
   ProjectNewRoute: ProjectNewRoute,
   RoleSelectRoute: RoleSelectRoute,
