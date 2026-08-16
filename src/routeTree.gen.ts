@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as PmRouteImport } from './routes/pm'
+import { Route as ProjectNewRouteImport } from './routes/project-new'
 import { Route as RoleSelectRouteImport } from './routes/role-select'
 import { Route as ClientProjectNewRouteImport } from './routes/client.project-new'
 import { Route as PmIndexRouteImport } from './routes/pm.index'
@@ -39,6 +40,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const PmRoute = PmRouteImport.update({
   id: '/pm',
   path: '/pm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectNewRoute = ProjectNewRouteImport.update({
+  id: '/project-new',
+  path: '/project-new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RoleSelectRoute = RoleSelectRouteImport.update({
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/pm': typeof PmRouteWithChildren
+  '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
   '/client/project-new': typeof ClientProjectNewRoute
   '/pm/agent': typeof PmAgentRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
   '/client/project-new': typeof ClientProjectNewRoute
   '/pm/agent': typeof PmAgentRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/pm': typeof PmRouteWithChildren
+  '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
   '/client/project-new': typeof ClientProjectNewRoute
   '/pm/agent': typeof PmAgentRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/pm'
+    | '/project-new'
     | '/role-select'
     | '/client/project-new'
     | '/pm/agent'
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dashboard'
+    | '/project-new'
     | '/role-select'
     | '/client/project-new'
     | '/pm/agent'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/pm'
+    | '/project-new'
     | '/role-select'
     | '/client/project-new'
     | '/pm/agent'
@@ -221,6 +233,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   PmRoute: typeof PmRouteWithChildren
+  ProjectNewRoute: typeof ProjectNewRoute
   RoleSelectRoute: typeof RoleSelectRoute
   ClientProjectNewRoute: typeof ClientProjectNewRoute
   ApiPublicN8nProxyRoute: typeof ApiPublicN8nProxyRoute
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/pm'
       fullPath: '/pm'
       preLoaderRoute: typeof PmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/project-new': {
+      id: '/project-new'
+      path: '/project-new'
+      fullPath: '/project-new'
+      preLoaderRoute: typeof ProjectNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/role-select': {
@@ -375,6 +395,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   PmRoute: PmRouteWithChildren,
+  ProjectNewRoute: ProjectNewRoute,
   RoleSelectRoute: RoleSelectRoute,
   ClientProjectNewRoute: ClientProjectNewRoute,
   ApiPublicN8nProxyRoute: ApiPublicN8nProxyRoute,
