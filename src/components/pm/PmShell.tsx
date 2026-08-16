@@ -84,7 +84,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                   {project?.project_name || "پروژه‌ای انتخاب نشده"}
                 </span>
                 <span className="block truncate text-xs text-muted-foreground">
-                  مدیر پروژه: {projectManagerName(project)}
+                  کارفرما / شرکت: {projectManagerName(project)}
                 </span>
                 {project?.project_code && (
                   <span

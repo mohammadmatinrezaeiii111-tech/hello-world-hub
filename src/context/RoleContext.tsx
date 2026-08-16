@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type Role = "pm" | null;
+export type Role = "pm" | "user" | null;
 
 type RoleContextValue = {
   role: Role;
@@ -16,7 +16,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "pm") setRoleState("pm");
+    if (stored === "pm" || stored === "user") setRoleState(stored);
   }, []);
 
   const setRole = (next: Role) => {
