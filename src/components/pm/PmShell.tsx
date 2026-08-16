@@ -30,6 +30,7 @@ const menu = [
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { setRole } = useRole();
+  const { project, isLoading } = useActiveProject();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const isActive = (to: string) => pathname === to || pathname.startsWith(`${to}/`);
