@@ -11,9 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ManagerLoginRouteImport } from './routes/manager-login'
 import { Route as PmRouteImport } from './routes/pm'
+import { Route as ProjectNewRouteImport } from './routes/project-new'
 import { Route as RoleSelectRouteImport } from './routes/role-select'
-import { Route as ClientProjectNewRouteImport } from './routes/client.project-new'
 import { Route as PmIndexRouteImport } from './routes/pm.index'
 import { Route as PmAgentRouteImport } from './routes/pm.agent'
 import { Route as PmAiAnalysisRouteImport } from './routes/pm.ai-analysis'
@@ -36,19 +37,24 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManagerLoginRoute = ManagerLoginRouteImport.update({
+  id: '/manager-login',
+  path: '/manager-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PmRoute = PmRouteImport.update({
   id: '/pm',
   path: '/pm',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectNewRoute = ProjectNewRouteImport.update({
+  id: '/project-new',
+  path: '/project-new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RoleSelectRoute = RoleSelectRouteImport.update({
   id: '/role-select',
   path: '/role-select',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClientProjectNewRoute = ClientProjectNewRouteImport.update({
-  id: '/client/project-new',
-  path: '/client/project-new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PmIndexRoute = PmIndexRouteImport.update({
@@ -110,9 +116,10 @@ const PmTaskIdRoute = PmTaskIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/manager-login': typeof ManagerLoginRoute
   '/pm': typeof PmRouteWithChildren
+  '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
-  '/client/project-new': typeof ClientProjectNewRoute
   '/pm/agent': typeof PmAgentRoute
   '/pm/ai-analysis': typeof PmAiAnalysisRoute
   '/pm/analysis': typeof PmAnalysisRoute
@@ -128,8 +135,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/manager-login': typeof ManagerLoginRoute
+  '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
-  '/client/project-new': typeof ClientProjectNewRoute
   '/pm/agent': typeof PmAgentRoute
   '/pm/ai-analysis': typeof PmAiAnalysisRoute
   '/pm/analysis': typeof PmAnalysisRoute
@@ -146,9 +154,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/manager-login': typeof ManagerLoginRoute
   '/pm': typeof PmRouteWithChildren
+  '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
-  '/client/project-new': typeof ClientProjectNewRoute
   '/pm/agent': typeof PmAgentRoute
   '/pm/ai-analysis': typeof PmAiAnalysisRoute
   '/pm/analysis': typeof PmAnalysisRoute
@@ -166,9 +175,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/manager-login'
     | '/pm'
+    | '/project-new'
     | '/role-select'
-    | '/client/project-new'
     | '/pm/agent'
     | '/pm/ai-analysis'
     | '/pm/analysis'
@@ -184,8 +194,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dashboard'
+    | '/manager-login'
+    | '/project-new'
     | '/role-select'
-    | '/client/project-new'
     | '/pm/agent'
     | '/pm/ai-analysis'
     | '/pm/analysis'
@@ -201,9 +212,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/dashboard'
+    | '/manager-login'
     | '/pm'
+    | '/project-new'
     | '/role-select'
-    | '/client/project-new'
     | '/pm/agent'
     | '/pm/ai-analysis'
     | '/pm/analysis'
@@ -220,9 +232,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  ManagerLoginRoute: typeof ManagerLoginRoute
   PmRoute: typeof PmRouteWithChildren
+  ProjectNewRoute: typeof ProjectNewRoute
   RoleSelectRoute: typeof RoleSelectRoute
-  ClientProjectNewRoute: typeof ClientProjectNewRoute
   ApiPublicN8nProxyRoute: typeof ApiPublicN8nProxyRoute
 }
 
@@ -242,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/manager-login': {
+      id: '/manager-login'
+      path: '/manager-login'
+      fullPath: '/manager-login'
+      preLoaderRoute: typeof ManagerLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pm': {
       id: '/pm'
       path: '/pm'
@@ -249,18 +269,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PmRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/project-new': {
+      id: '/project-new'
+      path: '/project-new'
+      fullPath: '/project-new'
+      preLoaderRoute: typeof ProjectNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/role-select': {
       id: '/role-select'
       path: '/role-select'
       fullPath: '/role-select'
       preLoaderRoute: typeof RoleSelectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/client/project-new': {
-      id: '/client/project-new'
-      path: '/client/project-new'
-      fullPath: '/client/project-new'
-      preLoaderRoute: typeof ClientProjectNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pm/': {
@@ -374,9 +394,10 @@ const PmRouteWithChildren = PmRoute._addFileChildren(PmRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  ManagerLoginRoute: ManagerLoginRoute,
   PmRoute: PmRouteWithChildren,
+  ProjectNewRoute: ProjectNewRoute,
   RoleSelectRoute: RoleSelectRoute,
-  ClientProjectNewRoute: ClientProjectNewRoute,
   ApiPublicN8nProxyRoute: ApiPublicN8nProxyRoute,
 }
 export const routeTree = rootRouteImport

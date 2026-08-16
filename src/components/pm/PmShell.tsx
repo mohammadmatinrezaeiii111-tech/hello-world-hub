@@ -9,10 +9,14 @@ import {
   Menu,
   Settings2,
   Upload,
+  UserRound,
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRole } from "@/context/RoleContext";
+import { useActiveProject } from "@/hooks/use-active-project";
+import { clearActiveProject, projectManagerName } from "@/lib/project";
 import { cn } from "@/lib/utils";
 
 const menu = [
@@ -26,6 +30,7 @@ const menu = [
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { setRole } = useRole();
+  const { project, isLoading } = useActiveProject();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const isActive = (to: string) => pathname === to || pathname.startsWith(`${to}/`);
@@ -64,19 +69,39 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
 
         <div className="rounded-xl border border-border p-4">
-          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted text-sm font-bold text-primary">
-              م.ر
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-bold">مریم رضایی</span>
-              <span className="block truncate text-xs text-muted-foreground">مدیر پروژه</span>
-            </span>
-          </div>
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted text-primary">
+                <UserRound className="h-5 w-5" aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-bold">
+                  {project?.project_name || "پروژه‌ای انتخاب نشده"}
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  مدیر پروژه: {projectManagerName(project)}
+                </span>
+                {project?.project_code && (
+                  <span
+                    dir="ltr"
+                    className="mt-1 block truncate font-mono text-[11px] text-muted-foreground"
+                  >
+                    {project.project_code}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
           <Link
             to="/role-select"
             onClick={() => {
               setRole(null);
+              clearActiveProject();
               onNavigate?.();
             }}
             className="mt-4 flex h-10 items-center justify-center gap-2 rounded-xl border border-border text-sm text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
