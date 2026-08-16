@@ -51,9 +51,9 @@ function AuthEntry() {
       }
 
       setActiveProject(project);
-      setRole("pm");
+      setRole("user");
       toast.success("کد پروژه تأیید شد", { description: `پروژه: ${project.project_name}` });
-      navigate({ to: "/pm/dashboard" });
+      navigate({ to: "/user" });
     } catch {
       setErrorMessage("بررسی کد پروژه انجام نشد. اتصال اینترنت را بررسی کنید.");
     } finally {
@@ -69,8 +69,7 @@ function AuthEntry() {
             ورود به پروژه‌یار
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground sm:text-base">
-            اگر کد پروژه دارید با آن وارد شوید؛ مدیران پروژه از پنل مدیریت پروژه می‌سازند یا به
-            پروژه‌های خود وارد می‌شوند.
+            اگر کد پروژه دارید با آن وارد شوید؛ مدیران پروژه از پنل مدیریت، پروژه می‌سازند یا با کد پروژه وارد داشبورد مدیریتی می‌شوند.
           </p>
         </header>
 
@@ -111,7 +110,7 @@ function AuthEntry() {
                 className="h-12 w-full rounded-xl font-bold"
               >
                 {isChecking && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-                {isChecking ? "در حال بررسی..." : "ورود به داشبورد پروژه"}
+                {isChecking ? "در حال بررسی..." : "ورود به پنل فعالیت‌ها"}
               </Button>
             </form>
           </section>
@@ -125,7 +124,7 @@ function AuthEntry() {
               <div className="min-w-0">
                 <h2 className="text-xl font-bold sm:text-2xl">پنل مدیران پروژه</h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  ساخت پروژه جدید یا ورود مستقیم به پروژه‌های ساخته‌شده، بدون نیاز به کد.
+                  ساخت پروژه جدید یا ورود مدیر با کد اختصاصی پروژه.
                 </p>
               </div>
             </div>
@@ -151,7 +150,7 @@ function AuthEntry() {
                 <span className="min-w-0">
                   <span className="block text-sm font-bold">ورود مدیر</span>
                   <span className="mt-1 block text-xs text-muted-foreground">
-                    انتخاب یکی از پروژه‌های ساخته‌شده و ورود به داشبورد
+                    ورود با کد اختصاصی پروژه به داشبورد مدیریتی
                   </span>
                 </span>
                 <LogIn className="h-5 w-5 shrink-0 text-primary" aria-hidden />
