@@ -102,24 +102,57 @@ function NewProject() {
               </div>
               <h1 className="mt-6 text-2xl font-bold">پروژه با موفقیت ساخته شد</h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                این کد اختصاصی را برای ورود اعضای تیم به پروژه در اختیار آن‌ها بگذارید.
+                کد ورود اعضای تیم را بین اعضای پروژه پخش کنید. کد ورود مدیر
+                پروژه را فقط خودتان نگه دارید.
               </p>
-              <div className="mt-8 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
-                <code
-                  dir="ltr"
-                  className="flex-1 text-center text-xl font-bold tracking-[0.18em] text-primary"
-                >
-                  {created.project_code}
-                </code>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={copyProjectCode}
-                  aria-label="کپی کد پروژه"
-                >
-                  <Clipboard className="h-4 w-4" aria-hidden />
-                </Button>
+
+              <div className="mt-8 rounded-xl border border-primary/20 bg-primary/5 p-4 text-start">
+                <span className="flex items-center gap-2 text-sm font-bold text-primary">
+                  <Users className="h-4 w-4" aria-hidden />
+                  کد ورود اعضای تیم
+                </span>
+                <div className="mt-2 flex items-center gap-3">
+                  <code
+                    dir="ltr"
+                    className="flex-1 text-center text-xl font-bold tracking-[0.18em] text-foreground"
+                  >
+                    {created.project_code}
+                  </code>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={copyProjectCode}
+                    aria-label="کپی کد ورود اعضای تیم"
+                  >
+                    <Clipboard className="h-4 w-4" aria-hidden />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-secondary/30 bg-secondary/10 p-4 text-start">
+                <span className="flex items-center gap-2 text-sm font-bold text-foreground">
+                  <ShieldCheck className="h-4 w-4" aria-hidden />
+                  کد ورود مدیر پروژه
+                </span>
+                <div className="mt-2 flex items-center gap-3">
+                  <code
+                    dir="ltr"
+                    className="flex-1 text-center text-xl font-bold tracking-[0.18em] text-foreground"
+                  >
+                    {created.manager_code || "—"}
+                  </code>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={copyManagerCode}
+                    disabled={!created.manager_code}
+                    aria-label="کپی کد ورود مدیر پروژه"
+                  >
+                    <Clipboard className="h-4 w-4" aria-hidden />
+                  </Button>
+                </div>
               </div>
               <dl className="mt-6 space-y-2 rounded-xl border border-border p-4 text-start text-sm">
                 <div className="flex items-center justify-between gap-3">
