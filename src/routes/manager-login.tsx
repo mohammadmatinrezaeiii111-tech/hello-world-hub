@@ -41,7 +41,7 @@ function ManagerLogin() {
     try {
       const project = await fetchProjectByManagerCode(trimmed);
       if (!project) {
-        setErrorMessage("کد پروژه یافت نشد. کد اختصاصی پروژه خود را بررسی کنید.");
+        setErrorMessage("کد ورود مدیر یافت نشد. کد اختصاصی مدیر پروژه خود را بررسی کنید.");
         return;
       }
       setActiveProject(project);
