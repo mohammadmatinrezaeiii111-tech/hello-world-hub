@@ -39,7 +39,7 @@ function ManagerLogin() {
     setIsChecking(true);
     setErrorMessage(null);
     try {
-      const project = await fetchProjectByCode(trimmed);
+      const project = await fetchProjectByManagerCode(trimmed);
       if (!project) {
         setErrorMessage("کد پروژه یافت نشد. کد اختصاصی پروژه خود را بررسی کنید.");
         return;
