@@ -73,7 +73,7 @@ function ManagerLogin() {
           <div className="min-w-0">
             <h1 className="text-xl font-bold sm:text-2xl">ورود مدیر پروژه</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              کد اختصاصی پروژه خود را وارد کنید تا وارد داشبورد مدیریتی همان پروژه شوید.
+              کد اختصاصی مدیر پروژه را وارد کنید تا وارد داشبورد مدیریتی همان پروژه شوید.
             </p>
           </div>
         </div>
