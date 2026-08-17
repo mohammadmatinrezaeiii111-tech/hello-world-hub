@@ -81,7 +81,7 @@ function ManagerLogin() {
         <form onSubmit={submit} className="mt-8 space-y-4">
           <div>
             <label htmlFor="manager_project_code" className="text-sm font-bold">
-              کد پروژه
+              کد ورود مدیر پروژه
             </label>
             <Input
               id="manager_project_code"
