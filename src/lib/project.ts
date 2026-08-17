@@ -48,9 +48,11 @@ export function createProjectCode() {
 
 /** خواندن پروژه با کد پروژه */
 export async function fetchProjectByCode(code: string): Promise<Project | null> {
-  const { data, error } = await supabase.rpc("get_project_by_code", {
-    p_code: code.trim().toUpperCase(),
-  });
+  const { data, error } = await supabase
+    .rpc("get_project_by_code", {
+      p_code: code.trim().toUpperCase(),
+    })
+    .single();
 
   if (error) throw new Error("خواندن اطلاعات پروژه از پایگاه‌داده انجام نشد.");
   if (!data) return null;
@@ -65,11 +67,13 @@ export async function createProject(input: {
   clientName?: string;
 }): Promise<Project> {
   const project_code = createProjectCode();
-  const { data, error } = await supabase.rpc("create_project", {
-    p_project_name: input.projectName.trim(),
-    p_client_name: (input.clientName?.trim() || input.managerName.trim()),
-    p_project_code: project_code,
-  });
+  const { data, error } = await supabase
+    .rpc("create_project", {
+      p_project_name: input.projectName.trim(),
+      p_client_name: input.clientName?.trim() || input.managerName.trim(),
+      p_project_code: project_code,
+    })
+    .single();
 
   if (error || !data) {
     const isRls =
