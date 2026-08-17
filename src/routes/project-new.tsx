@@ -5,6 +5,7 @@ import {
   Clipboard,
   FolderPlus,
   Loader as Loader2,
+  ShieldCheck,
   TriangleAlert,
   Users,
 } from "lucide-react";
