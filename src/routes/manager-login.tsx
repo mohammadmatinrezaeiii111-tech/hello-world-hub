@@ -88,7 +88,7 @@ function ManagerLogin() {
               dir="ltr"
               value={code}
               onChange={(event) => setCode(event.target.value)}
-              placeholder="PRJ-XXXXXX"
+              placeholder="MGR-XXXXXXXX"
               className="mt-2 h-12 rounded-xl font-mono"
             />
           </div>
