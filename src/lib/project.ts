@@ -48,9 +48,11 @@ export function createProjectCode() {
 
 /** خواندن پروژه با کد پروژه */
 export async function fetchProjectByCode(code: string): Promise<Project | null> {
-  const { data, error } = await supabase.rpc("get_project_by_code", {
-    p_code: code.trim().toUpperCase(),
-  });
+  const { data, error } = await supabase
+    .rpc("get_project_by_code", {
+      p_code: code.trim().toUpperCase(),
+    })
+    .single();
 
   if (error) throw new Error("خواندن اطلاعات پروژه از پایگاه‌داده انجام نشد.");
   if (!data) return null;
