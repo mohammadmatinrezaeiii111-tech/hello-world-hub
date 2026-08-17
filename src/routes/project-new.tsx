@@ -67,7 +67,13 @@ function NewProject() {
   const copyProjectCode = async () => {
     if (!created) return;
     await navigator.clipboard.writeText(created.project_code);
-    toast.success("کد پروژه کپی شد");
+    toast.success("کد ورود اعضای تیم کپی شد");
+  };
+
+  const copyManagerCode = async () => {
+    if (!created?.manager_code) return;
+    await navigator.clipboard.writeText(created.manager_code);
+    toast.success("کد ورود مدیر پروژه کپی شد");
   };
 
   const enterDashboard = () => {
