@@ -48,28 +48,15 @@ export function createProjectCode() {
 
 /** خواندن پروژه با کد پروژه */
 export async function fetchProjectByCode(code: string): Promise<Project | null> {
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("project_code", code.trim().toUpperCase())
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_project_by_code", {
+    p_code: code.trim().toUpperCase(),
+  });
 
   if (error) throw new Error("خواندن اطلاعات پروژه از پایگاه‌داده انجام نشد.");
   if (!data) return null;
   return toProject(data as Record<string, unknown>);
 }
 
-/** فهرست پروژه‌های ساخته‌شده (برای ورود مدیر) */
-export async function fetchProjects(): Promise<Project[]> {
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  if (error) throw new Error("خواندن فهرست پروژه‌ها انجام نشد.");
-  return ((data ?? []) as Record<string, unknown>[]).map(toProject);
-}
 
 /** ثبت پروژه جدید؛ در نبود ستون مدیر پروژه، نام مدیر در فیلد مسئول ذخیره می‌شود. */
 export async function createProject(input: {
@@ -78,24 +65,11 @@ export async function createProject(input: {
   clientName?: string;
 }): Promise<Project> {
   const project_code = createProjectCode();
-  const base = {
-    project_name: input.projectName.trim(),
-    client_name: (input.clientName?.trim() || input.managerName.trim()),
-    project_code,
-  };
-
-  let { data, error } = await supabase
-    .from("projects")
-    .insert({ ...base, manager_name: input.managerName.trim() } as never)
-    .select("*")
-    .maybeSingle();
-
-  // اگر ستون مدیر پروژه در پایگاه‌داده وجود نداشت، بدون آن ثبت می‌کنیم.
-  if (error && (error.code === "PGRST204" || /manager_name/i.test(error.message ?? ""))) {
-    const retry = await supabase.from("projects").insert(base).select("*").maybeSingle();
-    data = retry.data;
-    error = retry.error;
-  }
+  const { data, error } = await supabase.rpc("create_project", {
+    p_project_name: input.projectName.trim(),
+    p_client_name: (input.clientName?.trim() || input.managerName.trim()),
+    p_project_code: project_code,
+  });
 
   if (error || !data) {
     const isRls =
