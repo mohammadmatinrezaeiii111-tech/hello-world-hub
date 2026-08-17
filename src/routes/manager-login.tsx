@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRole } from "@/context/RoleContext";
-import { fetchProjectByCode, setActiveProject } from "@/lib/project";
+import { fetchProjectByManagerCode, setActiveProject } from "@/lib/project";
 
 export const Route = createFileRoute("/manager-login")({
   head: () => ({
@@ -39,9 +39,9 @@ function ManagerLogin() {
     setIsChecking(true);
     setErrorMessage(null);
     try {
-      const project = await fetchProjectByCode(trimmed);
+      const project = await fetchProjectByManagerCode(trimmed);
       if (!project) {
-        setErrorMessage("کد پروژه یافت نشد. کد اختصاصی پروژه خود را بررسی کنید.");
+        setErrorMessage("کد ورود مدیر یافت نشد. کد اختصاصی مدیر پروژه خود را بررسی کنید.");
         return;
       }
       setActiveProject(project);
@@ -73,7 +73,7 @@ function ManagerLogin() {
           <div className="min-w-0">
             <h1 className="text-xl font-bold sm:text-2xl">ورود مدیر پروژه</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              کد اختصاصی پروژه خود را وارد کنید تا وارد داشبورد مدیریتی همان پروژه شوید.
+              کد اختصاصی مدیر پروژه را وارد کنید تا وارد داشبورد مدیریتی همان پروژه شوید.
             </p>
           </div>
         </div>
@@ -81,7 +81,7 @@ function ManagerLogin() {
         <form onSubmit={submit} className="mt-8 space-y-4">
           <div>
             <label htmlFor="manager_project_code" className="text-sm font-bold">
-              کد پروژه
+              کد ورود مدیر پروژه
             </label>
             <Input
               id="manager_project_code"

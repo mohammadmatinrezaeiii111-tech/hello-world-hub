@@ -10,6 +10,7 @@ export type Project = {
   project_name: string;
   client_name: string | null;
   project_code: string;
+  manager_code?: string | null;
   manager_name?: string | null;
   created_at?: string | null;
 };
@@ -25,6 +26,7 @@ function toProject(row: Record<string, unknown>): Project {
     project_name: str(row["project_name"]) ?? "",
     client_name: str(row["client_name"]),
     project_code: str(row["project_code"]) ?? "",
+    manager_code: str(row["manager_code"]),
     manager_name: str(row["manager_name"]),
     created_at: str(row["created_at"]),
   };
@@ -55,6 +57,19 @@ export async function fetchProjectByCode(code: string): Promise<Project | null> 
     .single();
 
   if (error) throw new Error("خواندن اطلاعات پروژه از پایگاه‌داده انجام نشد.");
+  if (!data) return null;
+  return toProject(data as Record<string, unknown>);
+}
+
+/** خواندن پروژه با کد مدیریتی (فقط مدیر) */
+export async function fetchProjectByManagerCode(code: string): Promise<Project | null> {
+  const { data, error } = await supabase
+    .rpc("get_project_by_manager_code", {
+      p_code: code.trim().toUpperCase(),
+    })
+    .single();
+
+  if (error) return null;
   if (!data) return null;
   return toProject(data as Record<string, unknown>);
 }
