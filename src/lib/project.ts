@@ -57,17 +57,6 @@ export async function fetchProjectByCode(code: string): Promise<Project | null> 
   return toProject(data as Record<string, unknown>);
 }
 
-/** فهرست پروژه‌های ساخته‌شده (برای ورود مدیر) */
-export async function fetchProjects(): Promise<Project[]> {
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  if (error) throw new Error("خواندن فهرست پروژه‌ها انجام نشد.");
-  return ((data ?? []) as Record<string, unknown>[]).map(toProject);
-}
 
 /** ثبت پروژه جدید؛ در نبود ستون مدیر پروژه، نام مدیر در فیلد مسئول ذخیره می‌شود. */
 export async function createProject(input: {
