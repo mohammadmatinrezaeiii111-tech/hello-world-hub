@@ -67,11 +67,13 @@ export async function createProject(input: {
   clientName?: string;
 }): Promise<Project> {
   const project_code = createProjectCode();
-  const { data, error } = await supabase.rpc("create_project", {
-    p_project_name: input.projectName.trim(),
-    p_client_name: (input.clientName?.trim() || input.managerName.trim()),
-    p_project_code: project_code,
-  });
+  const { data, error } = await supabase
+    .rpc("create_project", {
+      p_project_name: input.projectName.trim(),
+      p_client_name: input.clientName?.trim() || input.managerName.trim(),
+      p_project_code: project_code,
+    })
+    .single();
 
   if (error || !data) {
     const isRls =
