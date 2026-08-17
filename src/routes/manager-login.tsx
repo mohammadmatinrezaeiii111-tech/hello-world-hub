@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRole } from "@/context/RoleContext";
-import { fetchProjectByCode, setActiveProject } from "@/lib/project";
+import { fetchProjectByManagerCode, setActiveProject } from "@/lib/project";
 
 export const Route = createFileRoute("/manager-login")({
   head: () => ({
