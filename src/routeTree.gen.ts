@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ManagerLoginRouteImport } from './routes/manager-login'
 import { Route as PmRouteImport } from './routes/pm'
 import { Route as ProjectNewRouteImport } from './routes/project-new'
@@ -31,11 +30,6 @@ import { Route as PmTaskIdRouteImport } from './routes/pm.task.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ManagerLoginRoute = ManagerLoginRouteImport.update({
@@ -121,7 +115,6 @@ const PmTaskIdRoute = PmTaskIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/manager-login': typeof ManagerLoginRoute
   '/pm': typeof PmRouteWithChildren
   '/project-new': typeof ProjectNewRoute
@@ -141,7 +134,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/manager-login': typeof ManagerLoginRoute
   '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
@@ -161,7 +153,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/manager-login': typeof ManagerLoginRoute
   '/pm': typeof PmRouteWithChildren
   '/project-new': typeof ProjectNewRoute
@@ -183,7 +174,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dashboard'
     | '/manager-login'
     | '/pm'
     | '/project-new'
@@ -203,7 +193,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard'
     | '/manager-login'
     | '/project-new'
     | '/role-select'
@@ -222,7 +211,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/dashboard'
     | '/manager-login'
     | '/pm'
     | '/project-new'
@@ -243,7 +231,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
   ManagerLoginRoute: typeof ManagerLoginRoute
   PmRoute: typeof PmRouteWithChildren
   ProjectNewRoute: typeof ProjectNewRoute
@@ -259,13 +246,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manager-login': {
@@ -413,7 +393,6 @@ const PmRouteWithChildren = PmRoute._addFileChildren(PmRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
   ManagerLoginRoute: ManagerLoginRoute,
   PmRoute: PmRouteWithChildren,
   ProjectNewRoute: ProjectNewRoute,

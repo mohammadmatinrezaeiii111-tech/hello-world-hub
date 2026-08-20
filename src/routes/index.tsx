@@ -181,7 +181,7 @@ function Index() {
                   </ul>
 
                   <Link
-                    to="/dashboard"
+                    to="/role-select"
                     className="mt-10 inline-flex h-11 items-center justify-center rounded-xl border border-border px-6 text-sm font-bold text-foreground transition-colors duration-150 hover:bg-muted"
                   >
                     {c.cta}
