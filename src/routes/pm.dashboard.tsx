@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, BrainCircuit, Clock3, TrendingDown } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { PageHeader } from "@/components/pm/PmShell";
+import { EmptyState } from "@/components/pm/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,8 +18,15 @@ import {
 } from "@/components/ui/chart";
 import { toPersianDigits } from "@/lib/persian";
 import { ChartSkeleton, KpiCardsSkeleton, ListSkeleton } from "@/components/pm/Skeletons";
-import { useMockLoading } from "@/hooks/use-mock-loading";
-import { criticalDelayedTasks, dashboardKpis, sCurveData } from "@/mock/dashboard";
+import { getProjectCode } from "@/lib/n8n";
+import {
+  buildSCurve,
+  delayedTasks,
+  fetchProjectTasks,
+  plannedProgress,
+  taskPercent,
+  weightedProgress,
+} from "@/lib/pm-data";
 
 export const Route = createFileRoute("/pm/dashboard")({
   head: () => ({
@@ -31,6 +41,8 @@ export const Route = createFileRoute("/pm/dashboard")({
         property: "og:description",
         content: "نمای تحلیلی پیشرفت برنامه‌ای و واقعی پروژه.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PmDashboard,
@@ -54,7 +66,69 @@ const kpiIcons: Record<string, LucideIcon> = {
 };
 
 function PmDashboard() {
-  const isLoading = useMockLoading();
+  const [projectCode, setProjectCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProjectCode(getProjectCode());
+  }, []);
+
+  const { data, isPending, error } = useQuery({
+    queryKey: ["pm-dashboard-tasks", projectCode],
+    queryFn: () => fetchProjectTasks(projectCode as string),
+    enabled: Boolean(projectCode),
+    staleTime: 30_000,
+  });
+
+  const isLoading = Boolean(projectCode) && isPending;
+  const tasks = data ?? [];
+  const actual = weightedProgress(tasks);
+  const planned = plannedProgress(tasks);
+  const delayed = delayedTasks(tasks)
+    .slice()
+    .sort((a, b) => taskPercent(a) - taskPercent(b));
+  const curve = buildSCurve(tasks);
+
+  const kpis = [
+    {
+      id: "progress",
+      title: "پیشرفت برنامه‌ای vs واقعی",
+      value: `${toPersianDigits(planned)}٪ | ${toPersianDigits(actual)}٪`,
+      detail: `برنامه‌ای ${toPersianDigits(planned)}٪ — واقعی ${toPersianDigits(actual)}٪`,
+      tone: actual < planned ? "text-destructive" : "text-success",
+    },
+    {
+      id: "delay",
+      title: "فعالیت‌های دارای تاخیر",
+      value: `${toPersianDigits(delayed.length)} فعالیت`,
+      detail: "تاریخ پایان برنامه‌ای گذشته و پیشرفت زیر ۱۰۰٪",
+      tone: delayed.length > 0 ? "text-warning" : "text-success",
+    },
+    {
+      id: "blockers",
+      title: "کل فعالیت‌های بیس‌لاین",
+      value: `${toPersianDigits(tasks.length)} فعالیت`,
+      detail: "برگرفته از آخرین برنامه بیس‌لاین ثبت‌شده",
+      tone: "text-foreground",
+    },
+  ];
+
+  if (!projectCode) {
+    return (
+      <div>
+        <PageHeader
+          title="داشبورد مدیریت پروژه"
+          subtitle="شاخص‌های کلیدی، منحنی پیشرفت و فعالیت‌های بحرانی دارای تاخیر."
+        />
+        <div className="mt-10">
+          <EmptyState
+            icon={AlertTriangle}
+            title="کد پروژه یافت نشد"
+            description="ابتدا از صفحه ورود، کد پروژه را وارد کنید تا داده‌های واقعی پروژه نمایش داده شود."
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -70,12 +144,18 @@ function PmDashboard() {
         </Button>
       </PageHeader>
 
+      {error && (
+        <p className="mt-6 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          {error instanceof Error ? error.message : "دریافت داده‌های پروژه انجام نشد."}
+        </p>
+      )}
+
       <section className="mt-10">
         {isLoading ? (
           <KpiCardsSkeleton />
         ) : (
           <div className="grid gap-6 md:grid-cols-3">
-            {dashboardKpis.map((kpi) => {
+            {kpis.map((kpi) => {
               const Icon = kpiIcons[kpi.id]!;
               return (
                 <article
@@ -103,7 +183,7 @@ function PmDashboard() {
         <div className="mt-10">
           <ChartSkeleton />
         </div>
-      ) : (
+      ) : curve.length > 0 ? (
         <section className="mt-10 rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
           <div className="mb-6">
             <h2 className="text-lg font-bold tracking-tight">منحنی S-Curve</h2>
@@ -113,7 +193,7 @@ function PmDashboard() {
           </div>
 
           <ChartContainer config={chartConfig} className="aspect-[2/1] w-full min-h-[280px]">
-            <AreaChart data={sCurveData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <AreaChart data={curve} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="fillPlanned" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--color-planned)" stopOpacity={0.25} />
@@ -173,14 +253,14 @@ function PmDashboard() {
             </AreaChart>
           </ChartContainer>
         </section>
-      )}
+      ) : null}
 
       <section className="mt-10">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold tracking-tight">تسک‌های دارای تاخیر بحرانی</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              چهار فعالیت با بیشترین تاثیر تاخیر روی مسیر بحرانی
+              فعالیت‌هایی با تاریخ پایان برنامه‌ای گذشته و پیشرفت کمتر از ۱۰۰٪
             </p>
           </div>
           <Button asChild variant="outline" className="h-10 rounded-xl font-bold">
@@ -193,9 +273,15 @@ function PmDashboard() {
 
         {isLoading ? (
           <ListSkeleton />
+        ) : delayed.length === 0 ? (
+          <EmptyState
+            icon={Clock3}
+            title="فعالیت دارای تاخیری یافت نشد"
+            description="در حال حاضر فعالیتی با تاریخ پایان گذشته و پیشرفت ناتمام ثبت نشده است."
+          />
         ) : (
           <ul className="space-y-3">
-            {criticalDelayedTasks.map((task, index) => (
+            {delayed.map((task, index) => (
               <li key={task.id}>
                 <Link
                   to="/pm/task/$id"
@@ -213,19 +299,19 @@ function PmDashboard() {
                       </Badge>
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      WBS: {toPersianDigits(task.wbs)}
+                      WBS: {toPersianDigits(task.wbs)} — پایان برنامه‌ای: {task.baselineEnd}
                     </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="destructive" className="rounded-lg">
-                      {toPersianDigits(task.delayDays)} روز تاخیر
+                      پیشرفت {toPersianDigits(taskPercent(task))}٪
                     </Badge>
                     <Badge
                       variant="secondary"
                       className="rounded-lg bg-accent/20 text-warning hover:bg-accent/30"
                     >
-                      انحراف {toPersianDigits(task.variancePct)}٪
+                      انحراف {toPersianDigits(100 - taskPercent(task))}٪
                     </Badge>
                   </div>
                 </Link>
