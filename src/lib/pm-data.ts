@@ -185,21 +185,74 @@ export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDeta
   }
 
   return wbsRows.map((row, index) => {
+    const wbsCode = asText(
+      pick(row, [
+        "wbs_code",
+        "wbs",
+        "wbs_id",
+        "(WBS) کد فعالیت",
+        "کد فعالیت",
+        "کد WBS",
+        "ساختار شکست کار",
+      ]),
+    );
     const code =
       asText(pick(row, ["task_code", "activity_code", "code", "id", "کد فعالیت", "کد"])) ||
+      wbsCode ||
       `T-${index + 1}`;
     const title =
-      asText(pick(row, ["title", "task_name", "activity_name", "description", "name", "شرح", "عنوان"])) ||
-      code;
-    const wbs = asText(pick(row, ["wbs", "wbs_code", "wbs_id", "ساختار شکست کار"])) || code;
-    const weight = asNumber(pick(row, ["weight", "weight_pct", "وزن"]));
-    const owner = asText(pick(row, ["owner", "responsible", "assignee", "مسئول"])) || "—";
+      asText(
+        pick(row, [
+          "task_name",
+          "title",
+          "activity_name",
+          "description",
+          "name",
+          "شرح فعالیت",
+          "نام فعالیت",
+          "شرح",
+          "عنوان",
+        ]),
+      ) || code;
+    const wbs = wbsCode || code;
+    const weight = asNumber(pick(row, ["weight", "weight_pct", "وزن (%)", "وزن (٪)", "وزن"]));
+    const owner =
+      asText(
+        pick(row, [
+          "assignee",
+          "owner",
+          "responsible",
+          "contractor",
+          "مسئول اجرا",
+          "پیمانکار",
+          "مسئول",
+        ]),
+      ) || "—";
 
     const baselineStart = normalizeDate(
-      pick(row, ["baseline_start", "planned_start", "start_date", "start", "تاریخ شروع", "شروع برنامه‌ای"]),
+      pick(row, [
+        "start_date",
+        "baseline_start",
+        "planned_start",
+        "start",
+        "تاریخ شروع برنامه‌ای",
+        "تاریخ شروع",
+        "شروع برنامه‌ای",
+      ]),
     );
     const baselineEnd = normalizeDate(
-      pick(row, ["baseline_finish", "baseline_end", "planned_finish", "planned_end", "end_date", "finish", "end", "تاریخ پایان", "پایان برنامه‌ای"]),
+      pick(row, [
+        "end_date",
+        "baseline_finish",
+        "baseline_end",
+        "planned_finish",
+        "planned_end",
+        "finish",
+        "end",
+        "تاریخ پایان برنامه‌ای",
+        "تاریخ پایان",
+        "پایان برنامه‌ای",
+      ]),
     );
 
     const taskResponses = (byTask.get(code.trim().toUpperCase()) ?? []).slice();
