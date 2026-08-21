@@ -1,15 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CalendarRange, ListChecks, LogOut, UserRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useRole } from "@/context/RoleContext";
 import { useActiveProject } from "@/hooks/use-active-project";
-import { useMockLoading } from "@/hooks/use-mock-loading";
 import { clearActiveProject } from "@/lib/project";
-import { jalaliKey, todayJalaliKey, toPersianDigits } from "@/lib/persian";
-import { pmTaskList, type PmTaskDetail } from "@/mock/pm-tasks";
+import { getProjectCode } from "@/lib/n8n";
+import {
+  fetchTasksForTelegramId,
+  getTelegramId,
+  setTelegramId,
+  taskPercent,
+  type PmTaskDetail,
+} from "@/lib/pm-data";
+import { jalaliKey, todayJalaliKey } from "@/lib/persian";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/user")({
@@ -67,7 +74,6 @@ function inRange(task: PmTaskDetail, range: RangeFilter) {
 }
 
 function UserPanel() {
-  const isLoading = useMockLoading();
   const { project } = useActiveProject();
   const { setRole } = useRole();
 
@@ -75,20 +81,38 @@ function UserPanel() {
   const [status, setStatus] = useState<UserStatus | "all">("all");
   const [range, setRange] = useState<RangeFilter>("all");
 
-  const owners = useMemo(
-    () => Array.from(new Set(pmTaskList.map((task) => task.owner))),
-    [],
-  );
+  const [projectCode, setProjectCodeState] = useState<string | null>(null);
+  const [telegramId, setTelegramIdState] = useState<string | null>(null);
+  const [idInput, setIdInput] = useState("");
+
+  useEffect(() => {
+    setProjectCodeState(getProjectCode());
+    setTelegramIdState(getTelegramId());
+  }, []);
+
+  const code = projectCode ?? project?.project_code ?? null;
+
+  const { data, isPending, error } = useQuery({
+    queryKey: ["user-tasks", code, telegramId],
+    queryFn: () => fetchTasksForTelegramId(code as string, telegramId as string),
+    enabled: Boolean(code && telegramId),
+    staleTime: 30_000,
+  });
+
+  const isLoading = Boolean(code && telegramId) && isPending;
+  const tasks = data ?? [];
+
+  const owners = useMemo(() => Array.from(new Set(tasks.map((task) => task.owner))), [tasks]);
 
   const rows = useMemo(
     () =>
-      pmTaskList.filter(
+      tasks.filter(
         (task) =>
           (owner === "all" || task.owner === owner) &&
           (status === "all" || userStatus(task) === status) &&
           inRange(task, range),
       ),
-    [owner, status, range],
+    [tasks, owner, status, range],
   );
 
   const selectClass =
@@ -131,107 +155,155 @@ function UserPanel() {
             <ListChecks className="h-5 w-5" aria-hidden />
           </span>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">فعالیت‌های برنامه</h1>
+            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">فعالیت‌های من</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              نمای فقط‌خواندنی از فعالیت‌های برنامه بیس‌لاین و وضعیت فعلی آن‌ها.
+              نمای فقط‌خواندنی از فعالیت‌هایی که برای آن‌ها گزارش پیشرفت ثبت کرده‌اید.
             </p>
           </div>
         </div>
 
-        {/* نوار فیلترها */}
-        <div className="mt-8 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-3">
-          <label className="block">
-            <span className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <UserRound className="h-3.5 w-3.5" aria-hidden />
-              مسئول فعالیت
-            </span>
-            <select
-              value={owner}
-              onChange={(event) => setOwner(event.target.value)}
-              className={selectClass}
-            >
-              <option value="all">همه مسئولان</option>
-              {owners.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <ListChecks className="h-3.5 w-3.5" aria-hidden />
-              وضعیت فعالیت
-            </span>
-            <select
-              value={status}
-              onChange={(event) => setStatus(event.target.value as UserStatus | "all")}
-              className={selectClass}
-            >
-              <option value="all">همه وضعیت‌ها</option>
-              {(Object.keys(statusLabels) as UserStatus[]).map((key) => (
-                <option key={key} value={key}>
-                  {statusLabels[key]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <CalendarRange className="h-3.5 w-3.5" aria-hidden />
-              بازه زمانی
-            </span>
-            <select
-              value={range}
-              onChange={(event) => setRange(event.target.value as RangeFilter)}
-              className={selectClass}
-            >
-              <option value="all">همه بازه‌ها</option>
-              <option value="today">فعالیت‌های امروز</option>
-              <option value="week">فعالیت‌های این هفته</option>
-            </select>
-          </label>
-        </div>
-
-        {/* جدول فعالیت‌ها */}
-        {isLoading ? (
-          <div className="mt-6 space-y-3">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl border border-border bg-card p-5">
-                <Skeleton className="h-4 w-56" />
-                <Skeleton className="mt-3 h-3 w-40" />
-              </div>
-            ))}
-          </div>
-        ) : rows.length === 0 ? (
-          <p className="mt-6 rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-            فعالیتی با این فیلترها یافت نشد.
+        {!telegramId ? (
+          <form
+            className="mt-8 rounded-xl border border-border bg-card p-6"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const value = idInput.trim();
+              if (!value) return;
+              setTelegramId(value);
+              setTelegramIdState(value);
+            }}
+          >
+            <label className="block text-sm font-bold" htmlFor="telegram-id">
+              شناسه تلگرام شما
+            </label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              برای نمایش فعالیت‌های خودتان، شناسه تلگرامی که با آن گزارش می‌دهید را وارد کنید.
+            </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <input
+                id="telegram-id"
+                dir="ltr"
+                value={idInput}
+                onChange={(event) => setIdInput(event.target.value)}
+                placeholder="123456789"
+                className="h-11 w-full rounded-xl border border-border bg-background px-3 font-mono text-sm"
+              />
+              <button
+                type="submit"
+                className="h-11 shrink-0 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground"
+              >
+                نمایش فعالیت‌های من
+              </button>
+            </div>
+          </form>
+        ) : !code ? (
+          <p className="mt-8 rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+            کد پروژه یافت نشد. ابتدا از صفحه ورود کد پروژه را وارد کنید.
           </p>
         ) : (
-          <ul className="mt-6 space-y-3">
-            {rows.map((task) => {
-              const state = userStatus(task);
-              return (
-                <li
-                  key={task.id}
-                  className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
+          <>
+            {error && (
+              <p className="mt-6 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+                {error instanceof Error ? error.message : "دریافت فعالیت‌ها انجام نشد."}
+              </p>
+            )}
+
+            {/* نوار فیلترها */}
+            <div className="mt-8 grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-3">
+              <label className="block">
+                <span className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <UserRound className="h-3.5 w-3.5" aria-hidden />
+                  مسئول فعالیت
+                </span>
+                <select
+                  value={owner}
+                  onChange={(event) => setOwner(event.target.value)}
+                  className={selectClass}
                 >
-                  <div className="min-w-0">
-                    <span className="block truncate text-sm font-bold">{task.title}</span>
-                    <span className="mt-2 block text-xs text-muted-foreground">
-                      مسئول: {task.owner} — بازه برنامه: {toPersianDigits(task.baselineStart)} تا{" "}
-                      {toPersianDigits(task.baselineEnd)}
-                    </span>
+                  <option value="all">همه مسئولان</option>
+                  {owners.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <ListChecks className="h-3.5 w-3.5" aria-hidden />
+                  وضعیت فعالیت
+                </span>
+                <select
+                  value={status}
+                  onChange={(event) => setStatus(event.target.value as UserStatus | "all")}
+                  className={selectClass}
+                >
+                  <option value="all">همه وضعیت‌ها</option>
+                  {(Object.keys(statusLabels) as UserStatus[]).map((key) => (
+                    <option key={key} value={key}>
+                      {statusLabels[key]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CalendarRange className="h-3.5 w-3.5" aria-hidden />
+                  بازه زمانی
+                </span>
+                <select
+                  value={range}
+                  onChange={(event) => setRange(event.target.value as RangeFilter)}
+                  className={selectClass}
+                >
+                  <option value="all">همه بازه‌ها</option>
+                  <option value="today">فعالیت‌های امروز</option>
+                  <option value="week">فعالیت‌های این هفته</option>
+                </select>
+              </label>
+            </div>
+
+            {/* جدول فعالیت‌ها */}
+            {isLoading ? (
+              <div className="mt-6 space-y-3">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="rounded-xl border border-border bg-card p-5">
+                    <Skeleton className="h-4 w-56" />
+                    <Skeleton className="mt-3 h-3 w-40" />
                   </div>
-                  <Badge className={cn("w-fit rounded-lg border", statusClass[state])}>
-                    {statusLabels[state]}
-                  </Badge>
-                </li>
-              );
-            })}
-          </ul>
+                ))}
+              </div>
+            ) : rows.length === 0 ? (
+              <p className="mt-6 rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+                فعالیتی با این فیلترها یافت نشد.
+              </p>
+            ) : (
+              <ul className="mt-6 space-y-3">
+                {rows.map((task) => {
+                  const state = userStatus(task);
+                  return (
+                    <li
+                      key={task.id}
+                      className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <span className="block truncate text-sm font-bold">{task.title}</span>
+                        <span className="mt-2 block text-xs text-muted-foreground">
+                          مسئول: {task.owner} — بازه برنامه: {task.baselineStart} تا{" "}
+                          {task.baselineEnd} — پیشرفت: {taskPercent(task)}٪
+                        </span>
+                      </div>
+                      <Badge className={cn("w-fit rounded-lg border", statusClass[state])}>
+                        {statusLabels[state]}
+                      </Badge>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </>
         )}
       </main>
     </div>
