@@ -59,9 +59,22 @@ export type ResponseRow = {
 
 /** ——— ابزارهای کمکی ——— */
 
+/** یکسان‌سازی نام کلیدها: حروف کوچک، حذف نیم‌فاصله و فاصله‌های اضافه، ی/ک عربی */
+function normalizeKey(key: string): string {
+  return key
+    .toLowerCase()
+    .replace(/[\u200c\u200f\u200e]/g, "")
+    .replace(/ي/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/[\s_\-()%٪]/g, "")
+    .trim();
+}
+
 function pick(row: Record<string, unknown>, keys: string[]): unknown {
+  const normalizedRow = Object.keys(row).map((k) => [normalizeKey(k), k] as const);
   for (const key of keys) {
-    const match = Object.keys(row).find((k) => k.toLowerCase() === key.toLowerCase());
+    const target = normalizeKey(key);
+    const match = normalizedRow.find(([normalized]) => normalized === target)?.[1];
     if (match !== undefined) {
       const value = row[match];
       if (value !== null && value !== undefined && String(value).trim() !== "") return value;
