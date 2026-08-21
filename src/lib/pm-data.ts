@@ -127,30 +127,67 @@ export function resolveStatus(percent: number, baselineEndKey: number | null): T
 
 /** ——— خواندن از پایگاه‌داده ——— */
 
+function toWbsList(raw: unknown): Record<string, unknown>[] {
+  let parsed = typeof raw === "string" ? safeJson(raw) : raw;
+  // بعضی رکوردها رشته‌ای دوبار-انکد شده‌اند
+  if (typeof parsed === "string") parsed = safeJson(parsed);
+
+  const container = parsed as Record<string, unknown> | null;
+  const list = Array.isArray(parsed)
+    ? parsed
+    : Array.isArray(container?.["tasks"])
+      ? (container!["tasks"] as unknown[])
+      : Array.isArray(container?.["activities"])
+        ? (container!["activities"] as unknown[])
+        : Array.isArray(container?.["wbs_data"])
+          ? (container!["wbs_data"] as unknown[])
+          : Array.isArray(container?.["data"])
+            ? (container!["data"] as unknown[])
+            : container && typeof container === "object"
+              ? Object.values(container).filter((v) => Array.isArray(v)).flat()
+              : [];
+
+  return list.filter(
+    (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
+  );
+}
+
 async function fetchWbsRows(projectCode: string): Promise<Record<string, unknown>[]> {
   const { data, error } = await supabase
     .from("baselines")
-    .select("wbs_data, created_at")
+    .select("wbs_data, created_at, project_code")
     .eq("project_code", projectCode)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (error) throw new Error("خواندن برنامه بیس‌لاین از پایگاه‌داده انجام نشد.");
-  if (!data) return [];
+  console.log("Supabase Data:", data, "Error:", error);
 
-  const raw = (data as Record<string, unknown>)["wbs_data"];
-  const parsed = typeof raw === "string" ? safeJson(raw) : raw;
-  const list = Array.isArray(parsed)
-    ? parsed
-    : Array.isArray((parsed as Record<string, unknown> | null)?.["tasks"])
-      ? ((parsed as Record<string, unknown>)["tasks"] as unknown[])
-      : Array.isArray((parsed as Record<string, unknown> | null)?.["activities"])
-        ? ((parsed as Record<string, unknown>)["activities"] as unknown[])
-        : [];
+  if (error && error.code !== "PGRST116") {
+    throw new Error("خواندن برنامه بیس‌لاین از پایگاه‌داده انجام نشد.");
+  }
 
-  return list.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object");
+  let rows = data ? toWbsList((data as Record<string, unknown>)["wbs_data"]) : [];
+
+  // Fallback: اگر برای این کد پروژه رکوردی نبود، آخرین بیس‌لاین ثبت‌شده را بخوان
+  if (rows.length === 0) {
+    const fallback = await supabase
+      .from("baselines")
+      .select("wbs_data, created_at, project_code")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    console.log("Supabase Data (fallback baseline):", fallback.data, "Error:", fallback.error);
+
+    if (fallback.data) {
+      rows = toWbsList((fallback.data as Record<string, unknown>)["wbs_data"]);
+    }
+  }
+
+  return rows;
 }
+
 
 function safeJson(value: string): unknown {
   try {
