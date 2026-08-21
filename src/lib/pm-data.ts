@@ -204,7 +204,10 @@ async function fetchResponses(projectCode: string): Promise<ResponseRow[]> {
     .eq("Project_id", projectCode)
     .order("created_at", { ascending: true });
 
+  console.log("Supabase Data (responses):", data, "Error:", error);
+
   if (error) throw new Error("خواندن گزارش‌های پیشرفت از پایگاه‌داده انجام نشد.");
+
 
   return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
     id: asText(row["id"]),
