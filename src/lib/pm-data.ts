@@ -349,7 +349,6 @@ export function setTelegramId(value: string) {
 }
 
 /** فعالیت‌هایی که این کاربر (با telegram_id) برایشان گزارش داده است */
-/** فعالیت‌هایی که این کاربر (با telegram_id) برایشان گزارش داده است */
 export async function fetchTasksForTelegramId(
   projectCode: string,
   telegramId: string,
