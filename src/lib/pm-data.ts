@@ -349,11 +349,22 @@ export function setTelegramId(value: string) {
 }
 
 /** فعالیت‌هایی که این کاربر (با telegram_id) برایشان گزارش داده است */
-export function tasksForTelegramId(tasks: PmTaskDetail[], telegramId: string): PmTaskDetail[] {
+/** فعالیت‌هایی که این کاربر (با telegram_id) برایشان گزارش داده است */
+export async function fetchTasksForTelegramId(
+  projectCode: string,
+  telegramId: string,
+): Promise<PmTaskDetail[]> {
   const id = telegramId.trim();
   if (!id) return [];
-  return tasks.filter((task) =>
-    task.reports.some((report) => report.reporter.trim() === id) ||
-    task.reports.length > 0 && task.reports.some((report) => report.id.includes(id)),
+  const [tasks, responses] = await Promise.all([
+    fetchProjectTasks(projectCode),
+    fetchResponses(projectCode),
+  ]);
+  const codes = new Set(
+    responses
+      .filter((response) => (response.telegram_id ?? "").trim() === id)
+      .map((response) => (response.task_code ?? "").trim().toUpperCase()),
   );
+  return tasks.filter((task) => codes.has(task.id.trim().toUpperCase()));
 }
+
