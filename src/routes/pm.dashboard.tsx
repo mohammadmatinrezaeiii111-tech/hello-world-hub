@@ -150,6 +150,18 @@ function PmDashboard() {
         </p>
       )}
 
+      {!isLoading && !error && tasks.length === 0 && (
+        <div className="mt-10">
+          <EmptyState
+            icon={AlertTriangle}
+            title="هنوز داده‌ای ثبت نشده"
+            description="برای این پروژه برنامه بیس‌لاینی ثبت نشده است؛ پس از آپلود برنامه زمان‌بندی، شاخص‌ها و منحنی پیشرفت محاسبه می‌شوند."
+          />
+        </div>
+      )}
+
+
+
       <section className="mt-10">
         {isLoading ? (
           <KpiCardsSkeleton />
