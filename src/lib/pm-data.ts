@@ -153,40 +153,28 @@ function toWbsList(raw: unknown): Record<string, unknown>[] {
 }
 
 async function fetchWbsRows(projectCode: string): Promise<Record<string, unknown>[]> {
+  // فقط بیس‌لاین‌های همین پروژه؛ آخرین رکوردی که داده معتبر دارد انتخاب می‌شود.
   const { data, error } = await supabase
     .from("baselines")
     .select("wbs_data, created_at, project_code")
     .eq("project_code", projectCode)
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(20);
 
   console.log("Supabase Data:", data, "Error:", error);
 
-  if (error && error.code !== "PGRST116") {
+  if (error) {
     throw new Error("خواندن برنامه بیس‌لاین از پایگاه‌داده انجام نشد.");
   }
 
-  let rows = data ? toWbsList((data as Record<string, unknown>)["wbs_data"]) : [];
-
-  // Fallback: اگر برای این کد پروژه رکوردی نبود، آخرین بیس‌لاین ثبت‌شده را بخوان
-  if (rows.length === 0) {
-    const fallback = await supabase
-      .from("baselines")
-      .select("wbs_data, created_at, project_code")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    console.log("Supabase Data (fallback baseline):", fallback.data, "Error:", fallback.error);
-
-    if (fallback.data) {
-      rows = toWbsList((fallback.data as Record<string, unknown>)["wbs_data"]);
-    }
+  for (const record of (data ?? []) as Record<string, unknown>[]) {
+    const rows = toWbsList(record["wbs_data"]);
+    if (rows.length > 0) return rows;
   }
 
-  return rows;
+  return [];
 }
+
 
 
 function safeJson(value: string): unknown {
