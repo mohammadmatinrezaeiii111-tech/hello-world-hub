@@ -225,6 +225,13 @@ export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDeta
     byTask.set(code, list);
   }
 
+  console.log("[fetchProjectTasks] WBS rows (raw):", wbsRows);
+  console.log("[fetchProjectTasks] Responses (raw):", responses);
+  console.log(
+    "[fetchProjectTasks] Responses grouped by task_code:",
+    Object.fromEntries(byTask.entries()),
+  );
+
   return wbsRows.map((row, index) => {
     const wbsCode = asText(
       pick(row, [
@@ -334,33 +341,57 @@ export function taskPercent(task: PmTaskDetail): number {
 /** میانگین وزنی پیشرفت کل پروژه */
 export function weightedProgress(tasks: PmTaskDetail[]): number {
   const totalWeight = tasks.reduce((sum, task) => sum + (task.weight || 0), 0);
+  let result: number;
   if (totalWeight <= 0) {
-    if (tasks.length === 0) return 0;
-    return Math.round(tasks.reduce((sum, task) => sum + taskPercent(task), 0) / tasks.length);
+    if (tasks.length === 0) {
+      result = 0;
+    } else {
+      result = Math.round(tasks.reduce((sum, task) => sum + taskPercent(task), 0) / tasks.length);
+    }
+  } else {
+    const sum = tasks.reduce((acc, task) => acc + (task.weight || 0) * taskPercent(task), 0);
+    result = Math.round(sum / totalWeight);
   }
-  const sum = tasks.reduce((acc, task) => acc + (task.weight || 0) * taskPercent(task), 0);
-  return Math.round(sum / totalWeight);
+  console.log(
+    "[weightedProgress] tasks:",
+    tasks.map((t) => ({ id: t.id, weight: t.weight, percent: taskPercent(t) })),
+    "totalWeight:",
+    totalWeight,
+    "result:",
+    result,
+  );
+  return result;
 }
 
 /** فعالیت‌های دارای تاخیر: تاریخ پایان برنامه‌ای گذشته و پیشرفت زیر ۱۰۰٪ */
 export function delayedTasks(tasks: PmTaskDetail[]): PmTaskDetail[] {
   const today = todayKey();
-  return tasks.filter((task) => {
+  const result = tasks.filter((task) => {
     const endKey = jalaliKey(task.baselineEnd);
     return endKey !== null && endKey < today && taskPercent(task) < 100;
   });
+  console.log(
+    "[delayedTasks] today key:",
+    today,
+    "delayed:",
+    result.map((t) => ({ id: t.id, baselineEnd: t.baselineEnd, percent: taskPercent(t) })),
+  );
+  return result;
 }
 
 /** پیشرفت برنامه‌ای پروژه تا امروز (وزن فعالیت‌هایی که باید تمام شده باشند) */
 export function plannedProgress(tasks: PmTaskDetail[]): number {
   const today = todayKey();
   const totalWeight = tasks.reduce((sum, task) => sum + (task.weight || 0), 0);
-  if (totalWeight <= 0) return 0;
+  const useEqualWeights = totalWeight <= 0;
+  const effectiveTotal = useEqualWeights ? tasks.length : totalWeight;
+  if (effectiveTotal <= 0) return 0;
+  const weightOf = (task: PmTaskDetail) => (useEqualWeights ? 1 : task.weight) || 0;
   const done = tasks.reduce((sum, task) => {
     const endKey = jalaliKey(task.baselineEnd);
-    return endKey !== null && endKey <= today ? sum + (task.weight || 0) : sum;
+    return endKey !== null && endKey <= today ? sum + weightOf(task) : sum;
   }, 0);
-  return Math.round((done / totalWeight) * 100);
+  return Math.round((done / effectiveTotal) * 100);
 }
 
 /** ماه شمسی یک کلید تاریخ (۱۴۰۴۰۵۱۵ → ۱۴۰۴۰۵) */
@@ -388,7 +419,11 @@ export type CurvePoint = { month: string; planned: number; actual: number | null
 /** منحنی S: پیشرفت تجمعی برنامه‌ای و واقعی به تفکیک ماه شمسی */
 export function buildSCurve(tasks: PmTaskDetail[]): CurvePoint[] {
   const totalWeight = tasks.reduce((sum, task) => sum + (task.weight || 0), 0);
-  if (totalWeight <= 0) return [];
+  const useEqualWeights = totalWeight <= 0;
+  const effectiveTotal = useEqualWeights ? tasks.length : totalWeight;
+  if (effectiveTotal <= 0) return [];
+
+  const weightOf = (task: PmTaskDetail) => (useEqualWeights ? 1 : task.weight) || 0;
 
   const months = new Set<number>();
   for (const task of tasks) {
@@ -403,10 +438,10 @@ export function buildSCurve(tasks: PmTaskDetail[]): CurvePoint[] {
   const sorted = Array.from(months).sort((a, b) => a - b);
   const currentMonth = monthOf(todayKey());
 
-  return sorted.map((month) => {
+  const curve = sorted.map((month) => {
     const plannedWeight = tasks.reduce((sum, task) => {
       const endKey = jalaliKey(task.baselineEnd);
-      return endKey !== null && monthOf(endKey) <= month ? sum + (task.weight || 0) : sum;
+      return endKey !== null && monthOf(endKey) <= month ? sum + weightOf(task) : sum;
     }, 0);
 
     const actualWeight = tasks.reduce((sum, task) => {
@@ -416,17 +451,20 @@ export function buildSCurve(tasks: PmTaskDetail[]): CurvePoint[] {
           return key !== null && monthOf(key) <= month;
         })
         .pop();
-      return upTo ? sum + ((task.weight || 0) * upTo.progressPct) / 100 : sum;
+      return upTo ? sum + (weightOf(task) * upTo.progressPct) / 100 : sum;
     }, 0);
 
     const label = `${MONTH_NAMES[(month % 100) - 1] ?? ""} ${toPersianDigits(String(Math.floor(month / 100)).slice(-2))}`;
 
     return {
       month: label.trim(),
-      planned: Math.round((plannedWeight / totalWeight) * 100),
-      actual: month <= currentMonth ? Math.round((actualWeight / totalWeight) * 100) : null,
+      planned: Math.round((plannedWeight / effectiveTotal) * 100),
+      actual: month <= currentMonth ? Math.round((actualWeight / effectiveTotal) * 100) : null,
     };
   });
+
+  console.log("[buildSCurve] curve data:", curve);
+  return curve;
 }
 
 /** شناسه تلگرام کاربر جاری (برای پنل فقط‌خواندنی کاربر) */

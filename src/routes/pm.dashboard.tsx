@@ -88,6 +88,11 @@ function PmDashboard() {
     .sort((a, b) => taskPercent(a) - taskPercent(b));
   const curve = buildSCurve(tasks);
 
+  console.log("[PmDashboard] tasks:", tasks);
+  console.log("[PmDashboard] planned %:", planned, "actual %:", actual);
+  console.log("[PmDashboard] delayed tasks:", delayed);
+  console.log("[PmDashboard] S-Curve:", curve);
+
   const kpis = [
     {
       id: "progress",
