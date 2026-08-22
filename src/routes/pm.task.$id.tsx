@@ -1,4 +1,6 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
   ArrowRight,
@@ -11,34 +13,36 @@ import {
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/pm/EmptyState";
+import { ListSkeleton } from "@/components/pm/Skeletons";
+import { getProjectCode } from "@/lib/n8n";
 import {
-  getPmTask,
+  fetchProjectTasks,
+  taskPercent,
   taskStatusLabels,
   type PmTaskDetail,
   type TaskStatus,
-} from "@/mock/pm-tasks";
+} from "@/lib/pm-data";
 import { toPersianDigits } from "@/lib/persian";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/pm/task/$id")({
-  loader: ({ params }) => {
-    const task = getPmTask(params.id);
-    if (!task) throw notFound();
-    return { task };
-  },
-  head: ({ loaderData }) => {
-    const title = loaderData?.task.title ?? "جزئیات تسک";
-    return {
-      meta: [
-        { title: `${title} | پروژه‌یار` },
-        {
-          name: "description",
-          content: "تایم‌لاین گزارش‌های روزانه، موانع و مقایسه تاریخ‌های بیس‌لاین تسک.",
-        },
-        { property: "og:title", content: `${title} | پروژه‌یار` },
-      ],
-    };
-  },
+  head: () => ({
+    meta: [
+      { title: "جزئیات فعالیت | پروژه‌یار" },
+      {
+        name: "description",
+        content: "تایم‌لاین گزارش‌های روزانه، موانع و مقایسه تاریخ‌های بیس‌لاین تسک.",
+      },
+      { property: "og:title", content: "جزئیات فعالیت | پروژه‌یار" },
+      {
+        property: "og:description",
+        content: "گزارش‌های ثبت‌شده و زمان‌بندی برنامه‌ای این فعالیت.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: PmTaskDetailPage,
 });
 
@@ -55,20 +59,94 @@ const severityClass = {
   Low: "border-border bg-muted text-muted-foreground",
 } as const;
 
+function BackLink() {
+  return (
+    <div className="mb-6">
+      <Button asChild variant="ghost" className="h-9 rounded-xl px-2 text-muted-foreground">
+        <Link to="/pm/tasks">
+          <ArrowRight className="h-4 w-4" aria-hidden />
+          بازگشت به مدیریت فعالیت‌ها
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
 function PmTaskDetailPage() {
-  const { task } = Route.useLoaderData() as { task: PmTaskDetail };
+  const { id } = Route.useParams();
+  const [projectCode, setProjectCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProjectCode(getProjectCode());
+  }, []);
+
+  const { data, isPending, error } = useQuery({
+    queryKey: ["pm-tasks", projectCode],
+    queryFn: () => fetchProjectTasks(projectCode as string),
+    enabled: Boolean(projectCode),
+    staleTime: 30_000,
+  });
+
+  const isLoading = Boolean(projectCode) && isPending;
+  const task =
+    (data ?? []).find((item) => item.id.trim().toUpperCase() === id.trim().toUpperCase()) ?? null;
+
+  if (!projectCode) {
+    return (
+      <div>
+        <BackLink />
+        <EmptyState
+          icon={AlertTriangle}
+          title="کد پروژه یافت نشد"
+          description="ابتدا از صفحه ورود کد پروژه را وارد کنید تا جزئیات فعالیت نمایش داده شود."
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <BackLink />
+        <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          {error instanceof Error ? error.message : "دریافت جزئیات فعالیت انجام نشد."}
+        </p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div>
+        <BackLink />
+        <ListSkeleton rows={4} />
+      </div>
+    );
+  }
+
+  if (!task) {
+    return (
+      <div>
+        <BackLink />
+        <EmptyState
+          icon={AlertTriangle}
+          title="هنوز داده‌ای ثبت نشده"
+          description="فعالیتی با این شناسه در برنامه بیس‌لاین این پروژه یافت نشد."
+        />
+      </div>
+    );
+  }
+
+  return <TaskView task={task} />;
+}
+
+function TaskView({ task }: { task: PmTaskDetail }) {
   const reports = [...task.reports].reverse();
+  const percent = taskPercent(task);
 
   return (
     <div>
-      <div className="mb-6">
-        <Button asChild variant="ghost" className="h-9 rounded-xl px-2 text-muted-foreground">
-          <Link to="/pm/tasks">
-            <ArrowRight className="h-4 w-4" aria-hidden />
-            بازگشت به مدیریت فعالیت‌ها
-          </Link>
-        </Button>
-      </div>
+      <BackLink />
 
       <header className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -100,7 +178,7 @@ function PmTaskDetailPage() {
             value={task.owner}
             icon={<UserRound className="h-4 w-4" aria-hidden />}
           />
-          <MetaItem label="وضعیت فعلی" value={taskStatusLabels[task.status]} />
+          <MetaItem label="پیشرفت فعلی" value={`${toPersianDigits(percent)}٪`} />
         </dl>
       </header>
 
@@ -112,37 +190,47 @@ function PmTaskDetailPage() {
               گزارش‌های روزانه ثبت‌شده از ابتدا تا امروز
             </p>
 
-            <ol className="relative mt-8 space-y-0 border-s border-border ms-3">
-              {reports.map((report, index) => (
-                <li key={report.id} className="relative pb-8 ps-8 last:pb-0">
-                  <span
-                    className={cn(
-                      "absolute -start-[9px] top-1 grid h-4 w-4 place-items-center rounded-full border-2 bg-card",
-                      index === 0 ? "border-primary" : "border-muted-foreground/40",
-                    )}
-                  >
-                    <CircleDot
+            {reports.length === 0 ? (
+              <p className="mt-6 rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+                هنوز گزارشی برای این فعالیت ثبت نشده است.
+              </p>
+            ) : (
+              <ol className="relative mt-8 space-y-0 border-s border-border ms-3">
+                {reports.map((report, index) => (
+                  <li key={report.id} className="relative pb-8 ps-8 last:pb-0">
+                    <span
                       className={cn(
-                        "h-2.5 w-2.5",
-                        index === 0 ? "text-primary" : "text-muted-foreground",
+                        "absolute -start-[9px] top-1 grid h-4 w-4 place-items-center rounded-full border-2 bg-card",
+                        index === 0 ? "border-primary" : "border-muted-foreground/40",
                       )}
-                      aria-hidden
-                    />
-                  </span>
+                    >
+                      <CircleDot
+                        className={cn(
+                          "h-2.5 w-2.5",
+                          index === 0 ? "text-primary" : "text-muted-foreground",
+                        )}
+                        aria-hidden
+                      />
+                    </span>
 
-                  <div className="rounded-xl border border-border bg-background p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <time className="text-sm font-bold">{toPersianDigits(report.date)}</time>
-                      <Badge variant="secondary" className="rounded-lg">
-                        پیشرفت {toPersianDigits(report.progressPct)}٪
-                      </Badge>
+                    <div className="rounded-xl border border-border bg-background p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <time className="text-sm font-bold">{toPersianDigits(report.date)}</time>
+                        <Badge variant="secondary" className="rounded-lg">
+                          پیشرفت {toPersianDigits(report.progressPct)}٪
+                        </Badge>
+                      </div>
+                      {report.note && (
+                        <p className="mt-3 text-sm leading-7 whitespace-pre-wrap text-foreground/90">
+                          {report.note}
+                        </p>
+                      )}
+                      <p className="mt-2 text-xs text-muted-foreground">مجری: {report.reporter}</p>
                     </div>
-                    <p className="mt-3 text-sm leading-7 text-foreground/90">{report.note}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">مجری: {report.reporter}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
+                  </li>
+                ))}
+              </ol>
+            )}
           </section>
 
           <section className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
@@ -153,10 +241,7 @@ function PmTaskDetailPage() {
 
             <ul className="mt-6 space-y-3">
               {task.blockers.map((blocker) => (
-                <li
-                  key={blocker.id}
-                  className="rounded-xl border border-border bg-background p-4"
-                >
+                <li key={blocker.id} className="rounded-xl border border-border bg-background p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -241,8 +326,8 @@ function PmTaskDetailPage() {
             </div>
 
             <p className="mt-5 rounded-xl border border-border bg-background px-3 py-3 text-xs leading-6 text-muted-foreground">
-              تاریخ پایان تخمینی نسبت به بیس‌لاین به‌روزرسانی شده و انحراف زمانی در داشبورد پروژه
-              منعکس می‌شود.
+              تاریخ‌های بیس‌لاین از برنامه زمان‌بندی پروژه و درصد پیشرفت از گزارش‌های ثبت‌شده اعضای
+              تیم استخراج می‌شود.
             </p>
           </div>
         </aside>
@@ -286,9 +371,7 @@ function ScheduleBlock({
     <div
       className={cn(
         "rounded-xl border p-4",
-        tone === "baseline"
-          ? "border-border bg-background"
-          : "border-primary/30 bg-primary/5",
+        tone === "baseline" ? "border-border bg-background" : "border-primary/30 bg-primary/5",
       )}
     >
       <p className="text-xs font-bold text-muted-foreground">{title}</p>
