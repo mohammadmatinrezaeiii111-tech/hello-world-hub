@@ -32,8 +32,18 @@ const statusBadgeClass: Record<TaskStatus, string> = {
   completed: "border-border bg-muted text-muted-foreground",
 };
 
+const statusFilters = [
+  { value: "all", label: "همه فعالیت‌ها" },
+  { value: "completed", label: "تکمیل‌شده" },
+  { value: "delayed", label: "دارای تاخیر" },
+  { value: "on-track", label: "مطابق برنامه" },
+] as const;
+
+type StatusFilter = (typeof statusFilters)[number]["value"];
+
 function PmTasks() {
   const [projectCode, setProjectCode] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   useEffect(() => {
     setProjectCode(getProjectCode());
@@ -47,7 +57,11 @@ function PmTasks() {
   });
 
   const isLoading = Boolean(projectCode) && isPending;
-  const tasks = data ?? [];
+  const allTasks = data ?? [];
+  const tasks =
+    statusFilter === "all"
+      ? allTasks
+      : allTasks.filter((task) => task.status === statusFilter);
 
   return (
     <div>
@@ -55,6 +69,34 @@ function PmTasks() {
         title="مدیریت فعالیت‌ها"
         subtitle="فهرست فعالیت‌های پروژه، مسئولان و وضعیت پیشرفت."
       />
+
+      {allTasks.length > 0 && (
+        <div className="mt-6 flex flex-wrap gap-2">
+          {statusFilters.map((filter) => {
+            const count =
+              filter.value === "all"
+                ? allTasks.length
+                : allTasks.filter((task) => task.status === filter.value).length;
+            const isActive = statusFilter === filter.value;
+            return (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setStatusFilter(filter.value)}
+                className={cn(
+                  "rounded-xl border px-4 py-2 text-xs font-bold transition-colors duration-150",
+                  isActive
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/40",
+                )}
+              >
+                {filter.label} ({toPersianDigits(count)})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
 
       {error && (
         <p className="mt-6 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
