@@ -341,6 +341,8 @@ export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDeta
       status: resolveStatus(percent, baselineEnd.key),
       baselineStart: baselineStart.display,
       baselineEnd: baselineEnd.display,
+      baselineStartTime: baselineStart.timestamp,
+      baselineEndTime: baselineEnd.timestamp,
       estimatedStart: baselineStart.display,
       estimatedEnd: baselineEnd.display,
       reports,
