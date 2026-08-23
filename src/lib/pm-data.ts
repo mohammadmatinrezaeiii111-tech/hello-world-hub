@@ -1,5 +1,11 @@
 import { supabase } from "@/lib/supabase";
-import { jalaliKey, toLatinDigits, toPersianDateString, toPersianDigits } from "@/lib/persian";
+import {
+  jalaliKey,
+  jalaliToTimestamp,
+  toLatinDigits,
+  toPersianDateString,
+  toPersianDigits,
+} from "@/lib/persian";
 
 /** ——— شکل داده‌ها (همان قرارداد قبلی صفحات) ——— */
 
@@ -32,6 +38,8 @@ export type PmTaskDetail = {
   status: TaskStatus;
   baselineStart: string;
   baselineEnd: string;
+  baselineStartTime: number | null;
+  baselineEndTime: number | null;
   estimatedStart: string;
   estimatedEnd: string;
   reports: DailyReport[];
@@ -93,26 +101,35 @@ function asNumber(value: unknown): number {
 }
 
 /** تاریخ ورودی می‌تواند شمسی («۱۴۰۴/۰۵/۱۵») یا میلادی (ISO) باشد. */
-export function normalizeDate(value: unknown): { display: string; key: number | null } {
+export function normalizeDate(value: unknown): {
+  display: string;
+  key: number | null;
+  timestamp: number | null;
+} {
   const raw = asText(value);
-  if (!raw) return { display: "—", key: null };
+  if (!raw) return { display: "—", key: null, timestamp: null };
 
   const latin = toLatinDigits(raw);
   const jalaliMatch = latin.match(/^(1[34]\d{2})[/\-.](\d{1,2})[/\-.](\d{1,2})/);
   if (jalaliMatch) {
     const [, y, m, d] = jalaliMatch;
     const display = `${y}/${String(m).padStart(2, "0")}/${String(d).padStart(2, "0")}`;
-    return { display: toPersianDigits(display), key: jalaliKey(display) };
+    return {
+      display: toPersianDigits(display),
+      key: jalaliKey(display),
+      timestamp: jalaliToTimestamp(Number(y), Number(m), Number(d)),
+    };
   }
 
   const date = new Date(latin);
   if (!isNaN(date.getTime())) {
     const display = toPersianDateString(date);
-    return { display, key: jalaliKey(display) };
+    return { display, key: jalaliKey(display), timestamp: date.getTime() };
   }
 
-  return { display: raw, key: null };
+  return { display: raw, key: null, timestamp: null };
 }
+
 
 function todayKey(): number {
   return jalaliKey(toPersianDateString(new Date())) ?? 0;
