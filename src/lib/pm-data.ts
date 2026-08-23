@@ -1,5 +1,11 @@
 import { supabase } from "@/lib/supabase";
-import { jalaliKey, toLatinDigits, toPersianDateString, toPersianDigits } from "@/lib/persian";
+import {
+  jalaliKey,
+  jalaliToTimestamp,
+  toLatinDigits,
+  toPersianDateString,
+  toPersianDigits,
+} from "@/lib/persian";
 
 /** ——— شکل داده‌ها (همان قرارداد قبلی صفحات) ——— */
 
@@ -32,6 +38,8 @@ export type PmTaskDetail = {
   status: TaskStatus;
   baselineStart: string;
   baselineEnd: string;
+  baselineStartTime: number | null;
+  baselineEndTime: number | null;
   estimatedStart: string;
   estimatedEnd: string;
   reports: DailyReport[];
@@ -93,26 +101,35 @@ function asNumber(value: unknown): number {
 }
 
 /** تاریخ ورودی می‌تواند شمسی («۱۴۰۴/۰۵/۱۵») یا میلادی (ISO) باشد. */
-export function normalizeDate(value: unknown): { display: string; key: number | null } {
+export function normalizeDate(value: unknown): {
+  display: string;
+  key: number | null;
+  timestamp: number | null;
+} {
   const raw = asText(value);
-  if (!raw) return { display: "—", key: null };
+  if (!raw) return { display: "—", key: null, timestamp: null };
 
   const latin = toLatinDigits(raw);
   const jalaliMatch = latin.match(/^(1[34]\d{2})[/\-.](\d{1,2})[/\-.](\d{1,2})/);
   if (jalaliMatch) {
     const [, y, m, d] = jalaliMatch;
     const display = `${y}/${String(m).padStart(2, "0")}/${String(d).padStart(2, "0")}`;
-    return { display: toPersianDigits(display), key: jalaliKey(display) };
+    return {
+      display: toPersianDigits(display),
+      key: jalaliKey(display),
+      timestamp: jalaliToTimestamp(Number(y), Number(m), Number(d)),
+    };
   }
 
   const date = new Date(latin);
   if (!isNaN(date.getTime())) {
     const display = toPersianDateString(date);
-    return { display, key: jalaliKey(display) };
+    return { display, key: jalaliKey(display), timestamp: date.getTime() };
   }
 
-  return { display: raw, key: null };
+  return { display: raw, key: null, timestamp: null };
 }
+
 
 function todayKey(): number {
   return jalaliKey(toPersianDateString(new Date())) ?? 0;
@@ -324,6 +341,8 @@ export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDeta
       status: resolveStatus(percent, baselineEnd.key),
       baselineStart: baselineStart.display,
       baselineEnd: baselineEnd.display,
+      baselineStartTime: baselineStart.timestamp,
+      baselineEndTime: baselineEnd.timestamp,
       estimatedStart: baselineStart.display,
       estimatedEnd: baselineEnd.display,
       reports,
@@ -379,18 +398,44 @@ export function delayedTasks(tasks: PmTaskDetail[]): PmTaskDetail[] {
   return result;
 }
 
-/** پیشرفت برنامه‌ای پروژه تا امروز (وزن فعالیت‌هایی که باید تمام شده باشند) */
-export function plannedProgress(tasks: PmTaskDetail[]): number {
-  const today = todayKey();
+const DAY_MS = 86_400_000;
+
+function nowTime(): number {
+  return Date.now();
+}
+
+function weightingOf(tasks: PmTaskDetail[]) {
   const totalWeight = tasks.reduce((sum, task) => sum + (task.weight || 0), 0);
   const useEqualWeights = totalWeight <= 0;
   const effectiveTotal = useEqualWeights ? tasks.length : totalWeight;
-  if (effectiveTotal <= 0) return 0;
   const weightOf = (task: PmTaskDetail) => (useEqualWeights ? 1 : task.weight) || 0;
-  const done = tasks.reduce((sum, task) => {
-    const endKey = jalaliKey(task.baselineEnd);
-    return endKey !== null && endKey <= today ? sum + weightOf(task) : sum;
-  }, 0);
+  return { effectiveTotal, weightOf };
+}
+
+/** درصد پیشرفت برنامه‌ای یک فعالیت در یک لحظه (۰..۱) به‌صورت خطی */
+function plannedRatioAt(task: PmTaskDetail, at: number): number {
+  const start = task.baselineStartTime;
+  const end = task.baselineEndTime;
+
+  if (end !== null && at >= end) return 1;
+  if (start !== null && at < start) return 0;
+
+  if (start !== null && end !== null && end > start) {
+    return Math.min(1, Math.max(0, (at - start) / (end - start)));
+  }
+
+  // نبود یکی از تاریخ‌ها: برگشت به منطق ساده‌ی کلید شمسی
+  const endKey = jalaliKey(task.baselineEnd);
+  if (endKey !== null) return endKey <= todayKey() ? 1 : 0;
+  return 0;
+}
+
+/** پیشرفت برنامه‌ای پروژه تا امروز (با درون‌یابی خطی فعالیت‌های در جریان) */
+export function plannedProgress(tasks: PmTaskDetail[]): number {
+  const { effectiveTotal, weightOf } = weightingOf(tasks);
+  if (effectiveTotal <= 0) return 0;
+  const at = nowTime();
+  const done = tasks.reduce((sum, task) => sum + weightOf(task) * plannedRatioAt(task, at), 0);
   return Math.round((done / effectiveTotal) * 100);
 }
 
@@ -416,19 +461,63 @@ const MONTH_NAMES = [
 
 export type CurvePoint = { month: string; planned: number; actual: number | null };
 
-/** منحنی S: پیشرفت تجمعی برنامه‌ای و واقعی به تفکیک ماه شمسی */
+function reportTime(report: DailyReport): number | null {
+  return normalizeDate(report.date).timestamp;
+}
+
+/** پیشرفت واقعی تجمعی تا یک لحظه (۰..۱) */
+function actualRatioAt(task: PmTaskDetail, at: number): number {
+  const upTo = task.reports.filter((report) => {
+    const t = reportTime(report);
+    return t !== null && t <= at;
+  });
+  const last = upTo[upTo.length - 1];
+  return last ? last.progressPct / 100 : 0;
+}
+
+/**
+ * منحنی S: پیشرفت تجمعی برنامه‌ای و واقعی.
+ * بازه‌های کوتاه‌تر از ۶۰ روز، هفتگی یا روزانه دسته‌بندی می‌شوند تا منحنی چند نقطه داشته باشد.
+ */
 export function buildSCurve(tasks: PmTaskDetail[]): CurvePoint[] {
-  const totalWeight = tasks.reduce((sum, task) => sum + (task.weight || 0), 0);
-  const useEqualWeights = totalWeight <= 0;
-  const effectiveTotal = useEqualWeights ? tasks.length : totalWeight;
+  const { effectiveTotal, weightOf } = weightingOf(tasks);
   if (effectiveTotal <= 0) return [];
 
-  const weightOf = (task: PmTaskDetail) => (useEqualWeights ? 1 : task.weight) || 0;
+  const starts = tasks.map((t) => t.baselineStartTime).filter((t): t is number => t !== null);
+  const ends = tasks.map((t) => t.baselineEndTime).filter((t): t is number => t !== null);
+  const reportTimes = tasks.flatMap((t) => t.reports.map(reportTime)).filter((t): t is number => t !== null);
+
+  const minTime = Math.min(...[...starts, ...ends, ...reportTimes]);
+  const maxTime = Math.max(...[...ends, ...starts, ...reportTimes]);
+  const spanDays =
+    Number.isFinite(minTime) && Number.isFinite(maxTime) ? (maxTime - minTime) / DAY_MS : NaN;
+
+  const now = nowTime();
+
+  if (Number.isFinite(spanDays) && spanDays < 60) {
+    const stepDays = spanDays <= 14 ? 1 : 7;
+    const points: CurvePoint[] = [];
+    for (let t = minTime; t <= maxTime + DAY_MS; t += stepDays * DAY_MS) {
+      const at = Math.min(t, maxTime);
+      const planned = tasks.reduce((sum, task) => sum + weightOf(task) * plannedRatioAt(task, at), 0);
+      const actual = tasks.reduce((sum, task) => sum + weightOf(task) * actualRatioAt(task, at), 0);
+      points.push({
+        month: toPersianDateString(new Date(at)),
+        planned: Math.round((planned / effectiveTotal) * 100),
+        actual: at <= now ? Math.round((actual / effectiveTotal) * 100) : null,
+      });
+      if (at >= maxTime) break;
+    }
+    console.log("[buildSCurve] short-span curve:", { spanDays, stepDays, points });
+    return points;
+  }
 
   const months = new Set<number>();
   for (const task of tasks) {
     const endKey = jalaliKey(task.baselineEnd);
     if (endKey !== null) months.add(monthOf(endKey));
+    const startKey = jalaliKey(task.baselineStart);
+    if (startKey !== null) months.add(monthOf(startKey));
     for (const report of task.reports) {
       const key = jalaliKey(report.date);
       if (key !== null) months.add(monthOf(key));
@@ -439,20 +528,12 @@ export function buildSCurve(tasks: PmTaskDetail[]): CurvePoint[] {
   const currentMonth = monthOf(todayKey());
 
   const curve = sorted.map((month) => {
-    const plannedWeight = tasks.reduce((sum, task) => {
-      const endKey = jalaliKey(task.baselineEnd);
-      return endKey !== null && monthOf(endKey) <= month ? sum + weightOf(task) : sum;
-    }, 0);
+    // انتهای ماه شمسی به‌عنوان لحظه‌ی سنجش
+    const monthEnd = jalaliToTimestamp(Math.floor(month / 100), month % 100, 1);
+    const at = monthEnd !== null ? monthEnd + 30 * DAY_MS : now;
 
-    const actualWeight = tasks.reduce((sum, task) => {
-      const upTo = task.reports
-        .filter((report) => {
-          const key = jalaliKey(report.date);
-          return key !== null && monthOf(key) <= month;
-        })
-        .pop();
-      return upTo ? sum + (weightOf(task) * upTo.progressPct) / 100 : sum;
-    }, 0);
+    const plannedWeight = tasks.reduce((sum, task) => sum + weightOf(task) * plannedRatioAt(task, at), 0);
+    const actualWeight = tasks.reduce((sum, task) => sum + weightOf(task) * actualRatioAt(task, at), 0);
 
     const label = `${MONTH_NAMES[(month % 100) - 1] ?? ""} ${toPersianDigits(String(Math.floor(month / 100)).slice(-2))}`;
 
@@ -466,6 +547,7 @@ export function buildSCurve(tasks: PmTaskDetail[]): CurvePoint[] {
   console.log("[buildSCurve] curve data:", curve);
   return curve;
 }
+
 
 /** شناسه تلگرام کاربر جاری (برای پنل فقط‌خواندنی کاربر) */
 export const TELEGRAM_ID_STORAGE_KEY = "telegram_id";
