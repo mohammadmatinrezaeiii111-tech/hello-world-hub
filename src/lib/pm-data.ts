@@ -256,6 +256,7 @@ export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDeta
         "wbs",
         "wbs_id",
         "(WBS) کد فعالیت",
+        "کد فعالیت (WBS)",
         "کد فعالیت",
         "کد WBS",
         "ساختار شکست کار",
