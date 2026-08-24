@@ -212,6 +212,7 @@ function PmAnalysis() {
       setVariance(fetchedVariance);
       saveVariance(fetchedVariance);
       setErrorMessage(null);
+      setTab("variance");
     }
   }, [fetchedVariance]);
 
