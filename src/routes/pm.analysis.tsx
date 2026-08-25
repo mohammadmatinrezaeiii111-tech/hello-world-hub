@@ -72,7 +72,8 @@ async function fetchLatestReport(projectCode: string): Promise<N8nAnalysis | nul
     .from("analysis_reports")
     .select("*")
     .eq("project_code", projectCode)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: false, nullsFirst: false })
+.order("id", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -282,20 +283,12 @@ function PmAnalysis() {
       }
 
       if (hasContent(direct)) {
-        setVariance(direct);
-        saveVariance(direct);
-      }
-
-      // بازخوانی خودکار دیتای Supabase با invalidate + refetch
-      await queryClient.invalidateQueries({ queryKey: ["variance-report"] });
-      const { data: refreshed } = await refetch();
-      const latest = refreshed ?? null;
-      if (hasContent(latest)) {
-        setVariance(latest);
-        saveVariance(latest);
-      } else if (!hasContent(direct)) {
-        toast.info("پاسخ دریافت شد اما گزارشی برای این پروژه ثبت نشده است.");
-      }
+  queryClient.setQueryData(["variance-report", projectCode], direct);
+  setVariance(direct);
+  saveVariance(direct);
+} else {
+  toast.info("پاسخ دریافت شد اما گزارشی برای این پروژه ثبت نشده است.");
+}
 
       setTab("variance");
       toast.success("تحلیل جدید انحرافات دریافت شد");
