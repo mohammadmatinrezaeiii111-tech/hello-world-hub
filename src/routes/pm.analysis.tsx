@@ -236,7 +236,8 @@ function PmAnalysis() {
     if (hasVariance) setVariance(storedVariance);
 
     // اگر تحلیل انحرافاتی وجود دارد، همان تب باز شود؛ در غیر این صورت مبنا
-    
+    setTab(hasVariance ? "variance" : "baseline");
+
     const code = getProjectCode();
     setProjectCodeState(code);
     if (!code) {
