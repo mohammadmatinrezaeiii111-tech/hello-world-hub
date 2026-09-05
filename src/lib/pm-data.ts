@@ -272,9 +272,10 @@ export async function fetchProjectBlockers(projectCode: string): Promise<Project
 
 /** ساخت فهرست فعالیت‌ها با شکل PmTaskDetail از بیس‌لاین و گزارش‌ها */
 export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDetail[]> {
-  const [wbsRows, responses] = await Promise.all([
+  const [wbsRows, responses, blockerRows] = await Promise.all([
     fetchWbsRows(projectCode),
     fetchResponses(projectCode),
+    fetchProjectBlockers(projectCode).catch(() => [] as ProjectBlockerRow[]),
   ]);
 
   const byTask = new Map<string, ResponseRow[]>();
@@ -285,6 +286,24 @@ export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDeta
     list.push(response);
     byTask.set(code, list);
   }
+
+  const blockersByTask = new Map<string, TaskBlockerRecord[]>();
+  for (const row of blockerRows) {
+    const code = row.task_code.trim().toUpperCase();
+    if (!code) continue;
+    const list = blockersByTask.get(code) ?? [];
+    list.push({
+      id: row.id,
+      title: row.title,
+      severity: row.severity,
+      reportedAt: normalizeDate(row.reported_at).display,
+      resolvedAt: row.resolved_at ? normalizeDate(row.resolved_at).display : null,
+      status: row.status === "resolved" ? "resolved" : "open",
+      impact: row.impact,
+    });
+    blockersByTask.set(code, list);
+  }
+
 
   console.log("[fetchProjectTasks] WBS rows (raw):", wbsRows);
   console.log("[fetchProjectTasks] Responses (raw):", responses);
