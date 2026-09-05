@@ -410,7 +410,7 @@ export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDeta
       estimatedStart: baselineStart.display,
       estimatedEnd: baselineEnd.display,
       reports,
-      blockers: [],
+      blockers: blockersByTask.get(code.trim().toUpperCase()) ?? [],
     } satisfies PmTaskDetail;
   });
 }
