@@ -226,11 +226,56 @@ async function fetchResponses(projectCode: string): Promise<ResponseRow[]> {
   }));
 }
 
+/** رکورد خام مانع از جدول blockers */
+export type ProjectBlockerRow = {
+  id: string;
+  task_code: string;
+  title: string;
+  severity: "High" | "Medium" | "Low";
+  status: string;
+  impact: string;
+  reported_at: string;
+  resolved_at: string | null;
+};
+
+function asSeverity(value: unknown): "High" | "Medium" | "Low" {
+  const raw = asText(value).toLowerCase();
+  if (raw.startsWith("h") || raw.includes("بحرانی") || raw.includes("زیاد")) return "High";
+  if (raw.startsWith("l") || raw.includes("کم")) return "Low";
+  return "Medium";
+}
+
+/** موانع ثبت‌شده برای پروژه جاری */
+export async function fetchProjectBlockers(projectCode: string): Promise<ProjectBlockerRow[]> {
+  const { data, error } = await supabase
+    .from("blockers")
+    .select("*")
+    .eq("project_code", projectCode)
+    .order("reported_at", { ascending: false });
+
+  console.log("Supabase Data (blockers):", data, "Error:", error);
+
+  if (error) throw new Error("خواندن موانع پروژه از پایگاه‌داده انجام نشد.");
+
+  return ((data ?? []) as Record<string, unknown>[]).map((row, index) => ({
+    id: asText(row["id"]) || `B-${index + 1}`,
+    task_code: asText(row["task_code"]),
+    title: asText(row["title"]) || "مانع بدون عنوان",
+    severity: asSeverity(row["severity"]),
+    status: asText(row["status"]).toLowerCase(),
+    impact: asText(row["impact"]),
+    reported_at: asText(row["reported_at"]),
+    resolved_at: asText(row["resolved_at"]) || null,
+  }));
+}
+
+
 /** ساخت فهرست فعالیت‌ها با شکل PmTaskDetail از بیس‌لاین و گزارش‌ها */
 export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDetail[]> {
-  const [wbsRows, responses] = await Promise.all([
+  const [wbsRows, responses, blockerRows] = await Promise.all([
     fetchWbsRows(projectCode),
     fetchResponses(projectCode),
+    fetchProjectBlockers(projectCode).catch(() => [] as ProjectBlockerRow[]),
   ]);
 
   const byTask = new Map<string, ResponseRow[]>();
@@ -241,6 +286,24 @@ export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDeta
     list.push(response);
     byTask.set(code, list);
   }
+
+  const blockersByTask = new Map<string, TaskBlockerRecord[]>();
+  for (const row of blockerRows) {
+    const code = row.task_code.trim().toUpperCase();
+    if (!code) continue;
+    const list = blockersByTask.get(code) ?? [];
+    list.push({
+      id: row.id,
+      title: row.title,
+      severity: row.severity,
+      reportedAt: normalizeDate(row.reported_at).display,
+      resolvedAt: row.resolved_at ? normalizeDate(row.resolved_at).display : null,
+      status: row.status === "resolved" ? "resolved" : "open",
+      impact: row.impact,
+    });
+    blockersByTask.set(code, list);
+  }
+
 
   console.log("[fetchProjectTasks] WBS rows (raw):", wbsRows);
   console.log("[fetchProjectTasks] Responses (raw):", responses);
@@ -347,7 +410,7 @@ export async function fetchProjectTasks(projectCode: string): Promise<PmTaskDeta
       estimatedStart: baselineStart.display,
       estimatedEnd: baselineEnd.display,
       reports,
-      blockers: [],
+      blockers: blockersByTask.get(code.trim().toUpperCase()) ?? [],
     } satisfies PmTaskDetail;
   });
 }
