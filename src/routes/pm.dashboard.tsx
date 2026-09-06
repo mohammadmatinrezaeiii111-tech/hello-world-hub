@@ -140,14 +140,7 @@ function PmDashboard() {
       <PageHeader
         title="داشبورد مدیریت پروژه"
         subtitle="شاخص‌های کلیدی، منحنی پیشرفت و فعالیت‌های بحرانی دارای تاخیر."
-      >
-        <Button asChild className="h-11 rounded-xl px-5 font-bold">
-          <Link to="/pm/ai-analysis">
-            <BrainCircuit className="h-4 w-4" aria-hidden />
-            تحلیل علل تاخیر با هوش مصنوعی
-          </Link>
-        </Button>
-      </PageHeader>
+      />
 
       {error && (
         <p className="mt-6 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
