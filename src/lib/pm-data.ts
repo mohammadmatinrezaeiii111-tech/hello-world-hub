@@ -252,17 +252,20 @@ function asSeverity(value: unknown): "High" | "Medium" | "Low" {
 
 /** موانع ثبت‌شده برای پروژه جاری */
 export async function fetchProjectBlockers(projectCode: string): Promise<ProjectBlockerRow[]> {
-  const { data, error } = await supabase
-    .from("blockers")
-    .select("*")
-    .eq("project_code", projectCode)
-    .order("reported_at", { ascending: false });
+  const { data, error } = await supabase.rpc("get_blockers_by_project", {
+    p_project_code: projectCode,
+  });
 
   console.log("Supabase Data (blockers):", data, "Error:", error);
 
   if (error) throw new Error("خواندن موانع پروژه از پایگاه‌داده انجام نشد.");
 
-  return ((data ?? []) as Record<string, unknown>[]).map((row, index) => ({
+  const rows = (Array.isArray(data) ? data : data ? [data] : []) as Record<string, unknown>[];
+
+  return [...rows]
+    .sort((a, b) => asText(b["reported_at"]).localeCompare(asText(a["reported_at"])))
+    .map((row, index) => ({
+
     id: asText(row["id"]) || `B-${index + 1}`,
     task_code: asText(row["task_code"]),
     title: asText(row["title"]) || "مانع بدون عنوان",
