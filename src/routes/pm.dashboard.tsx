@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, BrainCircuit, Clock3, TrendingDown } from "lucide-react";
+import { AlertTriangle, Clock3, TrendingDown } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { PageHeader } from "@/components/pm/PmShell";
@@ -273,12 +273,6 @@ function PmDashboard() {
               فعالیت‌هایی با تاریخ پایان برنامه‌ای گذشته و پیشرفت کمتر از ۱۰۰٪
             </p>
           </div>
-          <Button asChild variant="outline" className="h-10 rounded-xl font-bold">
-            <Link to="/pm/ai-analysis">
-              <BrainCircuit className="h-4 w-4" aria-hidden />
-              تحلیل علل تاخیر با هوش مصنوعی
-            </Link>
-          </Button>
         </div>
 
         {isLoading ? (
