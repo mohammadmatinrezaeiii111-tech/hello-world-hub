@@ -17,7 +17,6 @@ import { Route as RoleSelectRouteImport } from './routes/role-select'
 import { Route as UserRouteImport } from './routes/user'
 import { Route as PmIndexRouteImport } from './routes/pm.index'
 import { Route as PmAgentRouteImport } from './routes/pm.agent'
-import { Route as PmAiAnalysisRouteImport } from './routes/pm.ai-analysis'
 import { Route as PmAnalysisRouteImport } from './routes/pm.analysis'
 import { Route as PmBlockersRouteImport } from './routes/pm.blockers'
 import { Route as PmDashboardRouteImport } from './routes/pm.dashboard'
@@ -65,11 +64,6 @@ const PmIndexRoute = PmIndexRouteImport.update({
 const PmAgentRoute = PmAgentRouteImport.update({
   id: '/agent',
   path: '/agent',
-  getParentRoute: () => PmRoute,
-} as any)
-const PmAiAnalysisRoute = PmAiAnalysisRouteImport.update({
-  id: '/ai-analysis',
-  path: '/ai-analysis',
   getParentRoute: () => PmRoute,
 } as any)
 const PmAnalysisRoute = PmAnalysisRouteImport.update({
@@ -121,7 +115,6 @@ export interface FileRoutesByFullPath {
   '/role-select': typeof RoleSelectRoute
   '/user': typeof UserRoute
   '/pm/agent': typeof PmAgentRoute
-  '/pm/ai-analysis': typeof PmAiAnalysisRoute
   '/pm/analysis': typeof PmAnalysisRoute
   '/pm/blockers': typeof PmBlockersRoute
   '/pm/dashboard': typeof PmDashboardRoute
@@ -139,7 +132,6 @@ export interface FileRoutesByTo {
   '/role-select': typeof RoleSelectRoute
   '/user': typeof UserRoute
   '/pm/agent': typeof PmAgentRoute
-  '/pm/ai-analysis': typeof PmAiAnalysisRoute
   '/pm/analysis': typeof PmAnalysisRoute
   '/pm/blockers': typeof PmBlockersRoute
   '/pm/dashboard': typeof PmDashboardRoute
@@ -159,7 +151,6 @@ export interface FileRoutesById {
   '/role-select': typeof RoleSelectRoute
   '/user': typeof UserRoute
   '/pm/agent': typeof PmAgentRoute
-  '/pm/ai-analysis': typeof PmAiAnalysisRoute
   '/pm/analysis': typeof PmAnalysisRoute
   '/pm/blockers': typeof PmBlockersRoute
   '/pm/dashboard': typeof PmDashboardRoute
@@ -180,7 +171,6 @@ export interface FileRouteTypes {
     | '/role-select'
     | '/user'
     | '/pm/agent'
-    | '/pm/ai-analysis'
     | '/pm/analysis'
     | '/pm/blockers'
     | '/pm/dashboard'
@@ -198,7 +188,6 @@ export interface FileRouteTypes {
     | '/role-select'
     | '/user'
     | '/pm/agent'
-    | '/pm/ai-analysis'
     | '/pm/analysis'
     | '/pm/blockers'
     | '/pm/dashboard'
@@ -217,7 +206,6 @@ export interface FileRouteTypes {
     | '/role-select'
     | '/user'
     | '/pm/agent'
-    | '/pm/ai-analysis'
     | '/pm/analysis'
     | '/pm/blockers'
     | '/pm/dashboard'
@@ -297,13 +285,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PmAgentRouteImport
       parentRoute: typeof PmRoute
     }
-    '/pm/ai-analysis': {
-      id: '/pm/ai-analysis'
-      path: '/ai-analysis'
-      fullPath: '/pm/ai-analysis'
-      preLoaderRoute: typeof PmAiAnalysisRouteImport
-      parentRoute: typeof PmRoute
-    }
     '/pm/analysis': {
       id: '/pm/analysis'
       path: '/analysis'
@@ -365,7 +346,6 @@ declare module '@tanstack/react-router' {
 
 interface PmRouteChildren {
   PmAgentRoute: typeof PmAgentRoute
-  PmAiAnalysisRoute: typeof PmAiAnalysisRoute
   PmAnalysisRoute: typeof PmAnalysisRoute
   PmBlockersRoute: typeof PmBlockersRoute
   PmDashboardRoute: typeof PmDashboardRoute
@@ -378,7 +358,6 @@ interface PmRouteChildren {
 
 const PmRouteChildren: PmRouteChildren = {
   PmAgentRoute: PmAgentRoute,
-  PmAiAnalysisRoute: PmAiAnalysisRoute,
   PmAnalysisRoute: PmAnalysisRoute,
   PmBlockersRoute: PmBlockersRoute,
   PmDashboardRoute: PmDashboardRoute,
