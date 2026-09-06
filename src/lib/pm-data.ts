@@ -206,18 +206,20 @@ function safeJson(value: string): unknown {
 }
 
 async function fetchResponses(projectCode: string): Promise<ResponseRow[]> {
-  const { data, error } = await supabase
-    .from("responses")
-    .select("*")
-    .eq("Project_id", projectCode)
-    .order("created_at", { ascending: true });
+  const { data, error } = await supabase.rpc("get_responses_by_project", {
+    p_project_code: projectCode,
+  });
 
   console.log("Supabase Data (responses):", data, "Error:", error);
 
   if (error) throw new Error("خواندن گزارش‌های پیشرفت از پایگاه‌داده انجام نشد.");
 
+  const rows = (Array.isArray(data) ? data : data ? [data] : []) as Record<string, unknown>[];
 
-  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+  return [...rows]
+    .sort((a, b) => asText(a["created_at"]).localeCompare(asText(b["created_at"])))
+    .map((row) => ({
+
     id: asText(row["id"]),
     created_at: asText(row["created_at"]) || null,
     telegram_id: asText(row["telegram_id"]) || null,
