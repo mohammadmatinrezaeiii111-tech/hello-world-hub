@@ -171,12 +171,9 @@ function toWbsList(raw: unknown): Record<string, unknown>[] {
 
 async function fetchWbsRows(projectCode: string): Promise<Record<string, unknown>[]> {
   // فقط بیس‌لاین‌های همین پروژه؛ آخرین رکوردی که داده معتبر دارد انتخاب می‌شود.
-  const { data, error } = await supabase
-    .from("baselines")
-    .select("wbs_data, created_at, project_code")
-    .eq("project_code", projectCode)
-    .order("created_at", { ascending: false })
-    .limit(20);
+  const { data, error } = await supabase.rpc("get_baseline_by_project", {
+    p_project_code: projectCode,
+  });
 
   console.log("Supabase Data:", data, "Error:", error);
 
@@ -184,13 +181,19 @@ async function fetchWbsRows(projectCode: string): Promise<Record<string, unknown
     throw new Error("خواندن برنامه بیس‌لاین از پایگاه‌داده انجام نشد.");
   }
 
-  for (const record of (data ?? []) as Record<string, unknown>[]) {
+  const records = (Array.isArray(data) ? data : data ? [data] : []) as Record<string, unknown>[];
+  const sorted = [...records].sort((a, b) =>
+    asText(b["created_at"]).localeCompare(asText(a["created_at"])),
+  );
+
+  for (const record of sorted) {
     const rows = toWbsList(record["wbs_data"]);
     if (rows.length > 0) return rows;
   }
 
   return [];
 }
+
 
 
 
