@@ -219,16 +219,16 @@ async function fetchResponses(projectCode: string): Promise<ResponseRow[]> {
   return [...rows]
     .sort((a, b) => asText(a["created_at"]).localeCompare(asText(b["created_at"])))
     .map((row) => ({
+      id: asText(row["id"]),
+      created_at: asText(row["created_at"]) || null,
+      telegram_id: asText(row["telegram_id"]) || null,
+      username: asText(row["username"]) || null,
+      message: asText(row["message"]) || null,
+      task_code: asText(row["task_code"]) || null,
+      percent_complete: asNumber(row["percent_complete"]),
+      ai_summary: asText(row["ai_summary"]) || null,
+    }));
 
-    id: asText(row["id"]),
-    created_at: asText(row["created_at"]) || null,
-    telegram_id: asText(row["telegram_id"]) || null,
-    username: asText(row["username"]) || null,
-    message: asText(row["message"]) || null,
-    task_code: asText(row["task_code"]) || null,
-    percent_complete: asNumber(row["percent_complete"]),
-    ai_summary: asText(row["ai_summary"]) || null,
-  }));
 }
 
 /** رکورد خام مانع از جدول blockers */
