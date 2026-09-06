@@ -171,12 +171,9 @@ function toWbsList(raw: unknown): Record<string, unknown>[] {
 
 async function fetchWbsRows(projectCode: string): Promise<Record<string, unknown>[]> {
   // فقط بیس‌لاین‌های همین پروژه؛ آخرین رکوردی که داده معتبر دارد انتخاب می‌شود.
-  const { data, error } = await supabase
-    .from("baselines")
-    .select("wbs_data, created_at, project_code")
-    .eq("project_code", projectCode)
-    .order("created_at", { ascending: false })
-    .limit(20);
+  const { data, error } = await supabase.rpc("get_baseline_by_project", {
+    p_project_code: projectCode,
+  });
 
   console.log("Supabase Data:", data, "Error:", error);
 
@@ -184,13 +181,19 @@ async function fetchWbsRows(projectCode: string): Promise<Record<string, unknown
     throw new Error("خواندن برنامه بیس‌لاین از پایگاه‌داده انجام نشد.");
   }
 
-  for (const record of (data ?? []) as Record<string, unknown>[]) {
+  const records = (Array.isArray(data) ? data : data ? [data] : []) as Record<string, unknown>[];
+  const sorted = [...records].sort((a, b) =>
+    asText(b["created_at"]).localeCompare(asText(a["created_at"])),
+  );
+
+  for (const record of sorted) {
     const rows = toWbsList(record["wbs_data"]);
     if (rows.length > 0) return rows;
   }
 
   return [];
 }
+
 
 
 
@@ -203,27 +206,29 @@ function safeJson(value: string): unknown {
 }
 
 async function fetchResponses(projectCode: string): Promise<ResponseRow[]> {
-  const { data, error } = await supabase
-    .from("responses")
-    .select("*")
-    .eq("Project_id", projectCode)
-    .order("created_at", { ascending: true });
+  const { data, error } = await supabase.rpc("get_responses_by_project", {
+    p_project_code: projectCode,
+  });
 
   console.log("Supabase Data (responses):", data, "Error:", error);
 
   if (error) throw new Error("خواندن گزارش‌های پیشرفت از پایگاه‌داده انجام نشد.");
 
+  const rows = (Array.isArray(data) ? data : data ? [data] : []) as Record<string, unknown>[];
 
-  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
-    id: asText(row["id"]),
-    created_at: asText(row["created_at"]) || null,
-    telegram_id: asText(row["telegram_id"]) || null,
-    username: asText(row["username"]) || null,
-    message: asText(row["message"]) || null,
-    task_code: asText(row["task_code"]) || null,
-    percent_complete: asNumber(row["percent_complete"]),
-    ai_summary: asText(row["ai_summary"]) || null,
-  }));
+  return [...rows]
+    .sort((a, b) => asText(a["created_at"]).localeCompare(asText(b["created_at"])))
+    .map((row) => ({
+      id: asText(row["id"]),
+      created_at: asText(row["created_at"]) || null,
+      telegram_id: asText(row["telegram_id"]) || null,
+      username: asText(row["username"]) || null,
+      message: asText(row["message"]) || null,
+      task_code: asText(row["task_code"]) || null,
+      percent_complete: asNumber(row["percent_complete"]),
+      ai_summary: asText(row["ai_summary"]) || null,
+    }));
+
 }
 
 /** رکورد خام مانع از جدول blockers */
@@ -247,26 +252,29 @@ function asSeverity(value: unknown): "High" | "Medium" | "Low" {
 
 /** موانع ثبت‌شده برای پروژه جاری */
 export async function fetchProjectBlockers(projectCode: string): Promise<ProjectBlockerRow[]> {
-  const { data, error } = await supabase
-    .from("blockers")
-    .select("*")
-    .eq("project_code", projectCode)
-    .order("reported_at", { ascending: false });
+  const { data, error } = await supabase.rpc("get_blockers_by_project", {
+    p_project_code: projectCode,
+  });
 
   console.log("Supabase Data (blockers):", data, "Error:", error);
 
   if (error) throw new Error("خواندن موانع پروژه از پایگاه‌داده انجام نشد.");
 
-  return ((data ?? []) as Record<string, unknown>[]).map((row, index) => ({
-    id: asText(row["id"]) || `B-${index + 1}`,
-    task_code: asText(row["task_code"]),
-    title: asText(row["title"]) || "مانع بدون عنوان",
-    severity: asSeverity(row["severity"]),
-    status: asText(row["status"]).toLowerCase(),
-    impact: asText(row["impact"]),
-    reported_at: asText(row["reported_at"]),
-    resolved_at: asText(row["resolved_at"]) || null,
-  }));
+  const rows = (Array.isArray(data) ? data : data ? [data] : []) as Record<string, unknown>[];
+
+  return [...rows]
+    .sort((a, b) => asText(b["reported_at"]).localeCompare(asText(a["reported_at"])))
+    .map((row, index) => ({
+      id: asText(row["id"]) || `B-${index + 1}`,
+      task_code: asText(row["task_code"]),
+      title: asText(row["title"]) || "مانع بدون عنوان",
+      severity: asSeverity(row["severity"]),
+      status: asText(row["status"]).toLowerCase(),
+      impact: asText(row["impact"]),
+      reported_at: asText(row["reported_at"]),
+      resolved_at: asText(row["resolved_at"]) || null,
+    }));
+
 }
 
 
