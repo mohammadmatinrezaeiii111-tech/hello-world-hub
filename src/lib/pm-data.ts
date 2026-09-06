@@ -265,16 +265,16 @@ export async function fetchProjectBlockers(projectCode: string): Promise<Project
   return [...rows]
     .sort((a, b) => asText(b["reported_at"]).localeCompare(asText(a["reported_at"])))
     .map((row, index) => ({
+      id: asText(row["id"]) || `B-${index + 1}`,
+      task_code: asText(row["task_code"]),
+      title: asText(row["title"]) || "مانع بدون عنوان",
+      severity: asSeverity(row["severity"]),
+      status: asText(row["status"]).toLowerCase(),
+      impact: asText(row["impact"]),
+      reported_at: asText(row["reported_at"]),
+      resolved_at: asText(row["resolved_at"]) || null,
+    }));
 
-    id: asText(row["id"]) || `B-${index + 1}`,
-    task_code: asText(row["task_code"]),
-    title: asText(row["title"]) || "مانع بدون عنوان",
-    severity: asSeverity(row["severity"]),
-    status: asText(row["status"]).toLowerCase(),
-    impact: asText(row["impact"]),
-    reported_at: asText(row["reported_at"]),
-    resolved_at: asText(row["resolved_at"]) || null,
-  }));
 }
 
 
