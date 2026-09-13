@@ -233,9 +233,40 @@ function PmAnalysis() {
       setVariance(fetchedVariance);
       saveVariance(fetchedVariance);
       setErrorMessage(null);
-      setTab("variance");
     }
   }, [fetchedVariance]);
+
+  const { data: fetchedBaseline } = useQuery({
+    queryKey: ["baseline-report", projectCode],
+    queryFn: async () => {
+      if (!projectCode) return null;
+      return fetchLatestReport(projectCode, "baseline");
+    },
+    enabled: Boolean(projectCode),
+    initialData: () => {
+      const stored = getAnalysis();
+      if (!hasContent(stored)) return null;
+      if (!belongsToProject(stored, projectCode)) {
+        clearAnalysis();
+        return null;
+      }
+      return stored;
+    },
+    staleTime: 0,
+  });
+
+  useEffect(() => {
+    if (hasContent(fetchedBaseline)) {
+      setBaseline(fetchedBaseline);
+      saveAnalysis(fetchedBaseline);
+    }
+  }, [fetchedBaseline]);
+
+  // تب پیش‌فرض بر اساس داده معتبر همین پروژه از دیتابیس
+  useEffect(() => {
+    if (hasContent(fetchedVariance)) setTab("variance");
+    else if (hasContent(fetchedBaseline)) setTab("baseline");
+  }, [fetchedVariance, fetchedBaseline]);
 
   useEffect(() => {
     if (error) {
