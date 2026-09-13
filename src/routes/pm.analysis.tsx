@@ -26,6 +26,7 @@ import {
   getVariance,
   getWebhookUrl,
   normalizeFlexibleAnalysis,
+  saveAnalysis,
   saveVariance,
   type N8nAnalysis,
   postToN8n,
@@ -211,7 +212,7 @@ function PmAnalysis() {
     queryKey: ["variance-report", projectCode],
     queryFn: async () => {
       if (!projectCode) return null;
-      return fetchLatestReport(projectCode);
+      return fetchLatestReport(projectCode, "variance");
     },
     enabled: Boolean(projectCode),
     initialData: () => {
