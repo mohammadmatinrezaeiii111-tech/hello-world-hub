@@ -81,20 +81,15 @@ async function fetchLatestReport(
   projectCode: string,
   reportType: "baseline" | "variance",
 ): Promise<N8nAnalysis | null> {
-  const { data, error } = await supabase
-    .from("analysis_reports")
-    .select("*")
-    .eq("project_code", projectCode)
-    .eq("report_type", reportType)
-    .order("created_at", { ascending: false, nullsFirst: false })
-    .order("id", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_analysis_report", {
+    p_project_code: projectCode,
+    p_report_type: reportType,
+  });
 
   if (error) throw new Error("خواندن گزارش تحلیل از پایگاه‌داده انجام نشد.");
-  if (!data) return null;
+  const record = (data as Record<string, unknown>[] | null)?.[0];
+  if (!record) return null;
 
-  const record = data as Record<string, unknown>;
   const asString = (value: unknown) => (typeof value === "string" ? value : undefined);
 
   return {
