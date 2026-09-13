@@ -76,13 +76,17 @@ function belongsToProject(analysis: N8nAnalysis | null, projectCode: string | nu
   return analysis.project_code === projectCode;
 }
 
-async function fetchLatestReport(projectCode: string): Promise<N8nAnalysis | null> {
+async function fetchLatestReport(
+  projectCode: string,
+  reportType: "baseline" | "variance",
+): Promise<N8nAnalysis | null> {
   const { data, error } = await supabase
     .from("analysis_reports")
     .select("*")
     .eq("project_code", projectCode)
+    .eq("report_type", reportType)
     .order("created_at", { ascending: false, nullsFirst: false })
-.order("id", { ascending: false })
+    .order("id", { ascending: false })
     .limit(1)
     .maybeSingle();
 
