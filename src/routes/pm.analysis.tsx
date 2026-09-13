@@ -26,6 +26,7 @@ import {
   getVariance,
   getWebhookUrl,
   normalizeFlexibleAnalysis,
+  saveAnalysis,
   saveVariance,
   type N8nAnalysis,
   postToN8n,
@@ -76,13 +77,17 @@ function belongsToProject(analysis: N8nAnalysis | null, projectCode: string | nu
   return analysis.project_code === projectCode;
 }
 
-async function fetchLatestReport(projectCode: string): Promise<N8nAnalysis | null> {
+async function fetchLatestReport(
+  projectCode: string,
+  reportType: "baseline" | "variance",
+): Promise<N8nAnalysis | null> {
   const { data, error } = await supabase
     .from("analysis_reports")
     .select("*")
     .eq("project_code", projectCode)
+    .eq("report_type", reportType)
     .order("created_at", { ascending: false, nullsFirst: false })
-.order("id", { ascending: false })
+    .order("id", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -207,7 +212,7 @@ function PmAnalysis() {
     queryKey: ["variance-report", projectCode],
     queryFn: async () => {
       if (!projectCode) return null;
-      return fetchLatestReport(projectCode);
+      return fetchLatestReport(projectCode, "variance");
     },
     enabled: Boolean(projectCode),
     initialData: () => {
@@ -228,9 +233,40 @@ function PmAnalysis() {
       setVariance(fetchedVariance);
       saveVariance(fetchedVariance);
       setErrorMessage(null);
-      setTab("variance");
     }
   }, [fetchedVariance]);
+
+  const { data: fetchedBaseline } = useQuery({
+    queryKey: ["baseline-report", projectCode],
+    queryFn: async () => {
+      if (!projectCode) return null;
+      return fetchLatestReport(projectCode, "baseline");
+    },
+    enabled: Boolean(projectCode),
+    initialData: () => {
+      const stored = getAnalysis();
+      if (!hasContent(stored)) return null;
+      if (!belongsToProject(stored, projectCode)) {
+        clearAnalysis();
+        return null;
+      }
+      return stored;
+    },
+    staleTime: 0,
+  });
+
+  useEffect(() => {
+    if (hasContent(fetchedBaseline)) {
+      setBaseline(fetchedBaseline);
+      saveAnalysis(fetchedBaseline);
+    }
+  }, [fetchedBaseline]);
+
+  // تب پیش‌فرض بر اساس داده معتبر همین پروژه از دیتابیس
+  useEffect(() => {
+    if (hasContent(fetchedVariance)) setTab("variance");
+    else if (hasContent(fetchedBaseline)) setTab("baseline");
+  }, [fetchedVariance, fetchedBaseline]);
 
   useEffect(() => {
     if (error) {
@@ -240,39 +276,9 @@ function PmAnalysis() {
 
   useEffect(() => {
     const code = getProjectCode();
-
-    // تحلیل مبنا فقط اگر متعلق به همین پروژه باشد معتبر است
-    const stored = getAnalysis();
-    let hasBaseline = false;
-    if (hasContent(stored)) {
-      if (code && stored.project_code !== code) {
-        clearAnalysis();
-      } else {
-        setBaseline(stored);
-        hasBaseline = true;
-      }
-    }
-
-    // آخرین گزارش انحرافات ذخیره‌شده در مرورگر، فقط برای همین پروژه
-    const storedVariance = getVariance();
-    let hasVariance = false;
-    if (hasContent(storedVariance)) {
-      if (code && storedVariance.project_code !== code) {
-        clearVariance();
-      } else {
-        setVariance(storedVariance);
-        hasVariance = true;
-      }
-    }
-
-    // تب پیش‌فرض بر اساس تحلیل انحرافات معتبرِ همین پروژه تعیین می‌شود
-    setTab(hasVariance ? "variance" : "baseline");
-
     setProjectCodeState(code);
     if (!code) {
-      if (!hasBaseline && !hasVariance) {
-        setErrorMessage("کد پروژه یافت نشد. ابتدا از صفحه انتخاب نقش کد پروژه را وارد کنید.");
-      }
+      setErrorMessage("کد پروژه یافت نشد. ابتدا از صفحه انتخاب نقش کد پروژه را وارد کنید.");
     }
   }, []);
 
