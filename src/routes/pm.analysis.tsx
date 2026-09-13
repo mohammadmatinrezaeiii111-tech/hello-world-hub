@@ -196,7 +196,7 @@ function PmAnalysis() {
   const [tab, setTab] = useState<"baseline" | "variance">("variance");
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [projectCode, setProjectCodeState] = useState<string | null>(null);
+  const [projectCode, setProjectCodeState] = useState<string | null>(() => getProjectCode());
 
   const {
     data: fetchedVariance,
@@ -212,7 +212,13 @@ function PmAnalysis() {
     enabled: Boolean(projectCode),
     initialData: () => {
       const stored = getVariance();
-      return hasContent(stored) ? stored : null;
+      if (!hasContent(stored)) return null;
+      // تحلیل متعلق به پروژه دیگری است؛ نادیده گرفته و پاک می‌شود.
+      if (projectCode && stored.project_code !== projectCode) {
+        clearVariance();
+        return null;
+      }
+      return stored;
     },
     staleTime: 0,
   });
