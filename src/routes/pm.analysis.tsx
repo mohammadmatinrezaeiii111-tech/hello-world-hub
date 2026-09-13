@@ -239,22 +239,35 @@ function PmAnalysis() {
   }, [error]);
 
   useEffect(() => {
-    // تحلیل مبنا از پاسخ n8n که در مرحله آپلود ذخیره شده است
+    const code = getProjectCode();
+
+    // تحلیل مبنا فقط اگر متعلق به همین پروژه باشد معتبر است
     const stored = getAnalysis();
-    const hasBaseline = hasContent(stored);
-    if (hasBaseline) {
-      setBaseline(stored);
+    let hasBaseline = false;
+    if (hasContent(stored)) {
+      if (code && stored.project_code !== code) {
+        clearAnalysis();
+      } else {
+        setBaseline(stored);
+        hasBaseline = true;
+      }
     }
 
-    // آخرین گزارش انحرافات ذخیره‌شده در مرورگر
+    // آخرین گزارش انحرافات ذخیره‌شده در مرورگر، فقط برای همین پروژه
     const storedVariance = getVariance();
-    const hasVariance = hasContent(storedVariance);
-    if (hasVariance) setVariance(storedVariance);
+    let hasVariance = false;
+    if (hasContent(storedVariance)) {
+      if (code && storedVariance.project_code !== code) {
+        clearVariance();
+      } else {
+        setVariance(storedVariance);
+        hasVariance = true;
+      }
+    }
 
-    // اگر تحلیل انحرافاتی وجود دارد، همان تب باز شود؛ در غیر این صورت مبنا
+    // تب پیش‌فرض بر اساس تحلیل انحرافات معتبرِ همین پروژه تعیین می‌شود
     setTab(hasVariance ? "variance" : "baseline");
 
-    const code = getProjectCode();
     setProjectCodeState(code);
     if (!code) {
       if (!hasBaseline && !hasVariance) {
