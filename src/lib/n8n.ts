@@ -86,6 +86,11 @@ export function saveVariance(analysis: N8nAnalysis) {
   localStorage.setItem(VARIANCE_STORAGE_KEY, JSON.stringify(analysis));
 }
 
+export function clearVariance() {
+  if (!isBrowser()) return;
+  localStorage.removeItem(VARIANCE_STORAGE_KEY);
+}
+
 export function getVariance(): N8nAnalysis | null {
   if (!isBrowser()) return null;
   const raw = localStorage.getItem(VARIANCE_STORAGE_KEY);
@@ -107,6 +112,11 @@ export function getVariance(): N8nAnalysis | null {
 export function saveAnalysis(analysis: N8nAnalysis) {
   if (!isBrowser()) return;
   localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify(analysis));
+}
+
+export function clearAnalysis() {
+  if (!isBrowser()) return;
+  localStorage.removeItem(ANALYSIS_STORAGE_KEY);
 }
 
 export function getAnalysis(): N8nAnalysis | null {
@@ -242,6 +252,11 @@ export async function sendBaselineToN8n(file: File): Promise<N8nAnalysis> {
     throw new Error(
       "پاسخ n8n شامل فیلدهای single_page_summary و detailed_report نبود.",
     );
+  }
+  // اگر پاسخ n8n کد پروژه را برنگردانده، کد پروژه فعلی اضافه می‌شود تا
+  // اعتبارسنجی کش مرورگر (بر اساس project_code) درست کار کند.
+  if (!analysis.project_code && projectCode) {
+    analysis.project_code = projectCode;
   }
   return analysis;
 }

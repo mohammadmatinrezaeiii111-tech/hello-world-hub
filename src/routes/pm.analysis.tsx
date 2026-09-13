@@ -19,6 +19,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  clearAnalysis,
+  clearVariance,
   getAnalysis,
   getProjectCode,
   getVariance,
@@ -65,6 +67,13 @@ function resolveVarianceWebhook() {
 function hasContent(analysis: N8nAnalysis | null): analysis is N8nAnalysis {
   if (!analysis) return false;
   return Boolean(analysis.single_page_summary?.trim() || analysis.detailed_report?.trim());
+}
+
+/** تحلیل کش‌شده فقط زمانی معتبر است که کد پروژه‌اش با پروژه فعلی یکی باشد. */
+function belongsToProject(analysis: N8nAnalysis | null, projectCode: string | null): analysis is N8nAnalysis {
+  if (!hasContent(analysis)) return false;
+  if (!projectCode) return true;
+  return analysis.project_code === projectCode;
 }
 
 async function fetchLatestReport(projectCode: string): Promise<N8nAnalysis | null> {
@@ -187,7 +196,7 @@ function PmAnalysis() {
   const [tab, setTab] = useState<"baseline" | "variance">("variance");
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [projectCode, setProjectCodeState] = useState<string | null>(null);
+  const [projectCode, setProjectCodeState] = useState<string | null>(() => getProjectCode());
 
   const {
     data: fetchedVariance,
@@ -203,7 +212,13 @@ function PmAnalysis() {
     enabled: Boolean(projectCode),
     initialData: () => {
       const stored = getVariance();
-      return hasContent(stored) ? stored : null;
+      if (!hasContent(stored)) return null;
+      // تحلیل متعلق به پروژه دیگری است؛ نادیده گرفته و پاک می‌شود.
+      if (!belongsToProject(stored, projectCode)) {
+        clearVariance();
+        return null;
+      }
+      return stored;
     },
     staleTime: 0,
   });
@@ -224,22 +239,35 @@ function PmAnalysis() {
   }, [error]);
 
   useEffect(() => {
-    // تحلیل مبنا از پاسخ n8n که در مرحله آپلود ذخیره شده است
+    const code = getProjectCode();
+
+    // تحلیل مبنا فقط اگر متعلق به همین پروژه باشد معتبر است
     const stored = getAnalysis();
-    const hasBaseline = hasContent(stored);
-    if (hasBaseline) {
-      setBaseline(stored);
+    let hasBaseline = false;
+    if (hasContent(stored)) {
+      if (code && stored.project_code !== code) {
+        clearAnalysis();
+      } else {
+        setBaseline(stored);
+        hasBaseline = true;
+      }
     }
 
-    // آخرین گزارش انحرافات ذخیره‌شده در مرورگر
+    // آخرین گزارش انحرافات ذخیره‌شده در مرورگر، فقط برای همین پروژه
     const storedVariance = getVariance();
-    const hasVariance = hasContent(storedVariance);
-    if (hasVariance) setVariance(storedVariance);
+    let hasVariance = false;
+    if (hasContent(storedVariance)) {
+      if (code && storedVariance.project_code !== code) {
+        clearVariance();
+      } else {
+        setVariance(storedVariance);
+        hasVariance = true;
+      }
+    }
 
-    // اگر تحلیل انحرافاتی وجود دارد، همان تب باز شود؛ در غیر این صورت مبنا
+    // تب پیش‌فرض بر اساس تحلیل انحرافات معتبرِ همین پروژه تعیین می‌شود
     setTab(hasVariance ? "variance" : "baseline");
 
-    const code = getProjectCode();
     setProjectCodeState(code);
     if (!code) {
       if (!hasBaseline && !hasVariance) {
@@ -283,6 +311,7 @@ function PmAnalysis() {
       }
 
       if (hasContent(direct)) {
+  if (!direct.project_code) direct.project_code = projectCode;
   queryClient.setQueryData(["variance-report", projectCode], direct);
   setVariance(direct);
   saveVariance(direct);
