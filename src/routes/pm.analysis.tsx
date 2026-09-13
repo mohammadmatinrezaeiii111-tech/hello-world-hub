@@ -19,6 +19,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  clearAnalysis,
+  clearVariance,
   getAnalysis,
   getProjectCode,
   getVariance,
@@ -65,6 +67,13 @@ function resolveVarianceWebhook() {
 function hasContent(analysis: N8nAnalysis | null): analysis is N8nAnalysis {
   if (!analysis) return false;
   return Boolean(analysis.single_page_summary?.trim() || analysis.detailed_report?.trim());
+}
+
+/** تحلیل کش‌شده فقط زمانی معتبر است که کد پروژه‌اش با پروژه فعلی یکی باشد. */
+function belongsToProject(analysis: N8nAnalysis | null, projectCode: string | null): analysis is N8nAnalysis {
+  if (!hasContent(analysis)) return false;
+  if (!projectCode) return true;
+  return analysis.project_code === projectCode;
 }
 
 async function fetchLatestReport(projectCode: string): Promise<N8nAnalysis | null> {
