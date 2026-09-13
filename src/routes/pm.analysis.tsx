@@ -311,6 +311,7 @@ function PmAnalysis() {
       }
 
       if (hasContent(direct)) {
+  if (!direct.project_code) direct.project_code = projectCode;
   queryClient.setQueryData(["variance-report", projectCode], direct);
   setVariance(direct);
   saveVariance(direct);
