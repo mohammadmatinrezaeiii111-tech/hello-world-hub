@@ -276,39 +276,9 @@ function PmAnalysis() {
 
   useEffect(() => {
     const code = getProjectCode();
-
-    // تحلیل مبنا فقط اگر متعلق به همین پروژه باشد معتبر است
-    const stored = getAnalysis();
-    let hasBaseline = false;
-    if (hasContent(stored)) {
-      if (code && stored.project_code !== code) {
-        clearAnalysis();
-      } else {
-        setBaseline(stored);
-        hasBaseline = true;
-      }
-    }
-
-    // آخرین گزارش انحرافات ذخیره‌شده در مرورگر، فقط برای همین پروژه
-    const storedVariance = getVariance();
-    let hasVariance = false;
-    if (hasContent(storedVariance)) {
-      if (code && storedVariance.project_code !== code) {
-        clearVariance();
-      } else {
-        setVariance(storedVariance);
-        hasVariance = true;
-      }
-    }
-
-    // تب پیش‌فرض بر اساس تحلیل انحرافات معتبرِ همین پروژه تعیین می‌شود
-    setTab(hasVariance ? "variance" : "baseline");
-
     setProjectCodeState(code);
     if (!code) {
-      if (!hasBaseline && !hasVariance) {
-        setErrorMessage("کد پروژه یافت نشد. ابتدا از صفحه انتخاب نقش کد پروژه را وارد کنید.");
-      }
+      setErrorMessage("کد پروژه یافت نشد. ابتدا از صفحه انتخاب نقش کد پروژه را وارد کنید.");
     }
   }, []);
 
