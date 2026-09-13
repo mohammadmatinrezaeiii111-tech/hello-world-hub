@@ -49,10 +49,7 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-/**
- * ارسال درخواست به n8n؛ ابتدا مستقیم از مرورگر و در صورت خطای CORS/شبکه،
- * دوباره از طریق پروکسی سمت سرور.
- */
+/** ارسال درخواست به n8n همیشه از طریق پروکسی سمت سرور (بدون تلاش مستقیم از مرورگر). */
 export async function postToN8n(
   rawUrl: string,
   body: BodyInit,
@@ -61,18 +58,7 @@ export async function postToN8n(
   const url = sanitizeWebhookUrl(rawUrl);
   if (!url) throw new Error("آدرس وب‌هوک نامعتبر است. آدرس را با http:// یا https:// وارد کنید.");
 
-  const headers: Record<string, string> = { ...N8N_COMMON_HEADERS };
-  if (contentType) headers["Content-Type"] = contentType;
-
-  console.info("[n8n] direct request", { url, contentType });
-  try {
-    const response = await fetch(url, { method: "POST", headers, body });
-    const text = await response.text();
-    console.info("[n8n] direct response", { status: response.status, length: text.length });
-    return { status: response.status, ok: response.ok, text, viaProxy: false };
-  } catch (error) {
-    console.warn("[n8n] direct request failed, falling back to server proxy", error);
-  }
+  console.info("[n8n] proxy request", { url, contentType });
 
   const proxyHeaders: Record<string, string> = { "x-n8n-target": url };
   if (contentType) proxyHeaders["Content-Type"] = contentType;
