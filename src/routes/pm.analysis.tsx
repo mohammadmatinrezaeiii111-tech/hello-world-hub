@@ -214,7 +214,7 @@ function PmAnalysis() {
       const stored = getVariance();
       if (!hasContent(stored)) return null;
       // تحلیل متعلق به پروژه دیگری است؛ نادیده گرفته و پاک می‌شود.
-      if (projectCode && stored.project_code !== projectCode) {
+      if (!belongsToProject(stored, projectCode)) {
         clearVariance();
         return null;
       }
