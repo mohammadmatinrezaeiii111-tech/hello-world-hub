@@ -8,6 +8,7 @@ import { fetchProjectByCode, setActiveProject } from "@/lib/project";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/role-select")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "ورود به پروژه‌یار | ورود با کد پروژه یا پنل مدیران" },

@@ -20,6 +20,7 @@ function parseTarget(raw: string | null): URL | null {
 }
 
 export const Route = createFileRoute("/api/public/n8n-proxy")({
+  staticData: { sitemap: false },
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS_HEADERS }),

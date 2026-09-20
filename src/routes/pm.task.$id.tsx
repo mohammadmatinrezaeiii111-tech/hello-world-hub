@@ -27,6 +27,7 @@ import { toPersianDigits } from "@/lib/persian";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/pm/task/$id")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "جزئیات فعالیت | پروژه‌یار" },

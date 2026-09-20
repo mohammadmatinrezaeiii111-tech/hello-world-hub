@@ -16,6 +16,7 @@ import { Footer } from "@/components/landing/Footer";
 import { toPersianDigits } from "@/lib/persian";
 
 export const Route = createFileRoute("/")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "پروژه‌یار | دستیار هوشمند کنترل پروژه" },

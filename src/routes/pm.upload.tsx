@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/pm/upload")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "آپلود بیس‌لاین | پروژه‌یار" },

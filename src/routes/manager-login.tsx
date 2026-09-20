@@ -8,6 +8,7 @@ import { useRole } from "@/context/RoleContext";
 import { fetchProjectByManagerCode, setActiveProject } from "@/lib/project";
 
 export const Route = createFileRoute("/manager-login")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "ورود مدیر پروژه | پروژه‌یار" },

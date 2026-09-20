@@ -19,6 +19,7 @@ import { useActiveProject } from "@/hooks/use-active-project";
 import { fetchProjectBlockers, type ProjectBlockerRow } from "@/lib/pm-data";
 
 export const Route = createFileRoute("/pm/blockers")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "موانع فعال | پروژه‌یار" },

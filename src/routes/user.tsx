@@ -20,6 +20,7 @@ import { jalaliKey, todayJalaliKey } from "@/lib/persian";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/user")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "پنل کاربر | فعالیت‌های من در پروژه‌یار" },
