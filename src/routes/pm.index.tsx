@@ -5,6 +5,7 @@ import { useMockLoading } from "@/hooks/use-mock-loading";
 import { overviewStats } from "@/mock/dashboard";
 
 export const Route = createFileRoute("/pm/")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "خلاصه وضعیت پروژه | پروژه‌یار" },

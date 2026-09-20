@@ -40,6 +40,7 @@ import {
 } from "@/mock/integrations";
 
 export const Route = createFileRoute("/pm/settings/integrations")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "تنظیمات یکپارچه‌سازی | پروژه‌یار" },

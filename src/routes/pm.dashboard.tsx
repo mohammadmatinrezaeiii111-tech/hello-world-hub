@@ -29,6 +29,7 @@ import {
 } from "@/lib/pm-data";
 
 export const Route = createFileRoute("/pm/dashboard")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "داشبورد مدیریت پروژه | پروژه‌یار" },

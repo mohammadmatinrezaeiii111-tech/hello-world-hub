@@ -18,6 +18,7 @@ import { createProject, setActiveProject, type Project } from "@/lib/project";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/project-new")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "ایجاد پروژه جدید | پروژه‌یار" },

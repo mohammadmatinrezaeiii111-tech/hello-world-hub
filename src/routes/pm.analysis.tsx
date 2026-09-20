@@ -36,6 +36,7 @@ import { toPersianDateString } from "@/lib/persian";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/pm/analysis")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "گزارش تحلیل هوش مصنوعی | پروژه‌یار" },

@@ -14,6 +14,7 @@ import { Route as ManagerLoginRouteImport } from './routes/manager-login'
 import { Route as PmRouteImport } from './routes/pm'
 import { Route as ProjectNewRouteImport } from './routes/project-new'
 import { Route as RoleSelectRouteImport } from './routes/role-select'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as UserRouteImport } from './routes/user'
 import { Route as PmIndexRouteImport } from './routes/pm.index'
 import { Route as PmAgentRouteImport } from './routes/pm.agent'
@@ -49,6 +50,11 @@ const ProjectNewRoute = ProjectNewRouteImport.update({
 const RoleSelectRoute = RoleSelectRouteImport.update({
   id: '/role-select',
   path: '/role-select',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UserRoute = UserRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/pm': typeof PmRouteWithChildren
   '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/user': typeof UserRoute
   '/pm/agent': typeof PmAgentRoute
   '/pm/analysis': typeof PmAnalysisRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/manager-login': typeof ManagerLoginRoute
   '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/user': typeof UserRoute
   '/pm/agent': typeof PmAgentRoute
   '/pm/analysis': typeof PmAnalysisRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/pm': typeof PmRouteWithChildren
   '/project-new': typeof ProjectNewRoute
   '/role-select': typeof RoleSelectRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/user': typeof UserRoute
   '/pm/agent': typeof PmAgentRoute
   '/pm/analysis': typeof PmAnalysisRoute
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/pm'
     | '/project-new'
     | '/role-select'
+    | '/sitemap.xml'
     | '/user'
     | '/pm/agent'
     | '/pm/analysis'
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/manager-login'
     | '/project-new'
     | '/role-select'
+    | '/sitemap.xml'
     | '/user'
     | '/pm/agent'
     | '/pm/analysis'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/pm'
     | '/project-new'
     | '/role-select'
+    | '/sitemap.xml'
     | '/user'
     | '/pm/agent'
     | '/pm/analysis'
@@ -223,6 +235,7 @@ export interface RootRouteChildren {
   PmRoute: typeof PmRouteWithChildren
   ProjectNewRoute: typeof ProjectNewRoute
   RoleSelectRoute: typeof RoleSelectRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   UserRoute: typeof UserRoute
   ApiPublicN8nProxyRoute: typeof ApiPublicN8nProxyRoute
 }
@@ -262,6 +275,13 @@ declare module '@tanstack/react-router' {
       path: '/role-select'
       fullPath: '/role-select'
       preLoaderRoute: typeof RoleSelectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/user': {
@@ -376,6 +396,7 @@ const rootRouteChildren: RootRouteChildren = {
   PmRoute: PmRouteWithChildren,
   ProjectNewRoute: ProjectNewRoute,
   RoleSelectRoute: RoleSelectRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   UserRoute: UserRoute,
   ApiPublicN8nProxyRoute: ApiPublicN8nProxyRoute,
 }
