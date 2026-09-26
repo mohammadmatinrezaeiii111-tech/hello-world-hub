@@ -74,6 +74,60 @@ export async function fetchProjectByManagerCode(code: string): Promise<Project |
   return toProject(data as Record<string, unknown>);
 }
 
+/** شکل تنظیمات یادآوری روزانه پروژه */
+export type ProjectReminderSettings = {
+  reminder_time: string | null;
+  reminder_frequency: "daily" | "weekly" | "monthly" | null;
+  reminder_day_of_week: number | null;
+  reminder_day_of_month: number | null;
+};
+
+/** خواندن تنظیمات یادآوری پروژه با کد مدیر */
+export async function fetchProjectReminderSettings(
+  managerCode: string,
+): Promise<ProjectReminderSettings | null> {
+  const { data, error } = await supabase
+    .rpc("get_project_by_manager_code", {
+      p_code: managerCode.trim().toUpperCase(),
+    })
+    .single();
+
+  if (error || !data) return null;
+  const row = data as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v : null);
+  const num = (v: unknown) => {
+    if (v == null) return null;
+    const parsed = Number(v);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+  const freq = str(row["reminder_frequency"]);
+  return {
+    reminder_time: str(row["reminder_time"]),
+    reminder_frequency:
+      freq === "daily" || freq === "weekly" || freq === "monthly" ? freq : null,
+    reminder_day_of_week: num(row["reminder_day_of_week"]),
+    reminder_day_of_month: num(row["reminder_day_of_month"]),
+  };
+}
+
+/** ذخیره تنظیمات یادآوری پروژه با کد مدیر */
+export async function updateProjectReminder(input: {
+  managerCode: string;
+  reminderTime: string;
+  reminderFrequency: "daily" | "weekly" | "monthly";
+  reminderDayOfWeek: number | null;
+  reminderDayOfMonth: number | null;
+}): Promise<void> {
+  const { error } = await supabase.rpc("update_project_reminder", {
+    p_manager_code: input.managerCode.trim().toUpperCase(),
+    p_reminder_time: input.reminderTime,
+    p_reminder_frequency: input.reminderFrequency,
+    p_reminder_day_of_week: input.reminderDayOfWeek,
+    p_reminder_day_of_month: input.reminderDayOfMonth,
+  });
+  if (error) throw new Error("ذخیره تنظیمات یادآوری انجام نشد. لطفاً دوباره تلاش کنید.");
+}
+
 
 /** ثبت پروژه جدید؛ در نبود ستون مدیر پروژه، نام مدیر در فیلد مسئول ذخیره می‌شود. */
 export async function createProject(input: {
