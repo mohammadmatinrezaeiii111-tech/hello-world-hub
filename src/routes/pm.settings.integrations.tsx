@@ -91,6 +91,18 @@ function PmIntegrationsSettings() {
   const testTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ----- زمان‌بندی یادآوری روزانه -----
+  const [managerCode, setManagerCode] = useState<string | null>(null);
+  const [reminderLoading, setReminderLoading] = useState(true);
+  const [reminderLoadError, setReminderLoadError] = useState<string | null>(null);
+  const [reminderTime, setReminderTime] = useState("08:00");
+  const [reminderFrequency, setReminderFrequency] = useState<
+    "daily" | "weekly" | "monthly"
+  >("daily");
+  const [reminderDayOfWeek, setReminderDayOfWeek] = useState(6);
+  const [reminderDayOfMonth, setReminderDayOfMonth] = useState(1);
+  const [isSavingReminder, setIsSavingReminder] = useState(false);
+
   useEffect(() => {
     const stored = getWebhookUrl();
     if (stored) {
@@ -100,6 +112,47 @@ function PmIntegrationsSettings() {
     return () => {
       if (testTimerRef.current) clearTimeout(testTimerRef.current);
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const project = getActiveProject();
+      const code = project?.manager_code?.trim();
+      if (!code) {
+        if (!cancelled) {
+          setReminderLoading(false);
+          setReminderLoadError(
+            "کد ورود مدیر پروژه در دسترس نیست؛ برای تنظیم یادآوری با کد مدیر وارد شوید.",
+          );
+        }
+        return;
+      }
+      setManagerCode(code);
+      try {
+        const settings: ProjectReminderSettings | null =
+          await fetchProjectReminderSettings(code);
+        if (cancelled) return;
+        if (settings) {
+          if (settings.reminder_time) setReminderTime(settings.reminder_time.slice(0, 5));
+          if (settings.reminder_frequency) setReminderFrequency(settings.reminder_frequency);
+          if (settings.reminder_day_of_week != null)
+            setReminderDayOfWeek(settings.reminder_day_of_week);
+          if (settings.reminder_day_of_month != null)
+            setReminderDayOfMonth(settings.reminder_day_of_month);
+        }
+        setReminderLoading(false);
+      } catch {
+        if (!cancelled) {
+          setReminderLoading(false);
+          setReminderLoadError("خواندن تنظیمات یادآوری انجام نشد.");
+        }
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
     };
   }, []);
 
