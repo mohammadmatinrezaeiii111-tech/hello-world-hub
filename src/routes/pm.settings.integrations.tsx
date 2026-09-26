@@ -351,6 +351,131 @@ function PmIntegrationsSettings() {
 
         </section>
 
+        {/* Reminder schedule */}
+        <section className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Bell className="h-5 w-5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold tracking-tight">زمان‌بندی یادآوری روزانه</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                زمان و تناوب ارسال یادآوری‌های گزارش‌دهی نیروهای پروژه را تنظیم کنید.
+              </p>
+            </div>
+          </div>
+
+          {reminderLoading ? (
+            <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              در حال خواندن تنظیمات فعلی...
+            </div>
+          ) : reminderLoadError ? (
+            <p className="mt-6 text-sm text-destructive">{reminderLoadError}</p>
+          ) : (
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label htmlFor="reminder_frequency" className="text-xs font-medium text-muted-foreground">
+                  تکرار
+                </label>
+                <Select
+                  value={reminderFrequency}
+                  onValueChange={(value) =>
+                    setReminderFrequency(value as "daily" | "weekly" | "monthly")
+                  }
+                >
+                  <SelectTrigger id="reminder_frequency" className="h-11 w-full rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">روزانه</SelectItem>
+                    <SelectItem value="weekly">هفتگی</SelectItem>
+                    <SelectItem value="monthly">ماهانه</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="reminder_time" className="text-xs font-medium text-muted-foreground">
+                  ساعت ارسال
+                </label>
+                <Input
+                  id="reminder_time"
+                  type="time"
+                  dir="ltr"
+                  value={reminderTime}
+                  onChange={(event) => setReminderTime(event.target.value)}
+                  className="h-11 rounded-xl"
+                />
+              </div>
+
+              {reminderFrequency === "weekly" && (
+                <div className="space-y-2">
+                  <label htmlFor="reminder_day_of_week" className="text-xs font-medium text-muted-foreground">
+                    روز هفته
+                  </label>
+                  <Select
+                    value={String(reminderDayOfWeek)}
+                    onValueChange={(value) => setReminderDayOfWeek(Number(value))}
+                  >
+                    <SelectTrigger id="reminder_day_of_week" className="h-11 w-full rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">شنبه</SelectItem>
+                      <SelectItem value="0">یکشنبه</SelectItem>
+                      <SelectItem value="1">دوشنبه</SelectItem>
+                      <SelectItem value="2">سه‌شنبه</SelectItem>
+                      <SelectItem value="3">چهارشنبه</SelectItem>
+                      <SelectItem value="4">پنج‌شنبه</SelectItem>
+                      <SelectItem value="5">جمعه</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {reminderFrequency === "monthly" && (
+                <div className="space-y-2 sm:col-span-2">
+                  <label htmlFor="reminder_day_of_month" className="text-xs font-medium text-muted-foreground">
+                    روز ماه
+                  </label>
+                  <Input
+                    id="reminder_day_of_month"
+                    type="number"
+                    dir="ltr"
+                    min={1}
+                    max={31}
+                    value={reminderDayOfMonth}
+                    onChange={(event) => {
+                      const value = Number(event.target.value);
+                      setReminderDayOfMonth(
+                        Number.isFinite(value) ? Math.min(31, Math.max(1, value)) : 1,
+                      );
+                    }}
+                    className="h-11 rounded-xl sm:max-w-40"
+                  />
+                  <p className="text-xs leading-6 text-muted-foreground">
+                    اگه ماهی این روز رو نداشته باشه (مثلاً ۳۱ام در ماه‌های ۳۰روزه)، یادآوری در
+                    آخرین روز همون ماه فرستاده می‌شه.
+                  </p>
+                </div>
+              )}
+
+              <div className="sm:col-span-2">
+                <Button
+                  type="button"
+                  onClick={saveReminder}
+                  disabled={!reminderTime || isSavingReminder}
+                  className="h-11 rounded-xl px-6 font-bold"
+                >
+                  {isSavingReminder && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+                  ذخیره
+                </Button>
+              </div>
+            </div>
+          )}
+        </section>
+
         {/* Messenger bots */}
         <section className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
           <div className="flex flex-wrap items-start gap-3">
