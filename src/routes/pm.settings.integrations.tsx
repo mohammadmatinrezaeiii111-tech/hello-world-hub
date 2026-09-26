@@ -195,6 +195,34 @@ function PmIntegrationsSettings() {
     }
   };
 
+  const saveReminder = async () => {
+    if (!managerCode || isSavingReminder) return;
+    setIsSavingReminder(true);
+    try {
+      await updateProjectReminder({
+        managerCode,
+        reminderTime,
+        reminderFrequency,
+        reminderDayOfWeek: reminderFrequency === "weekly" ? reminderDayOfWeek : null,
+        reminderDayOfMonth: reminderFrequency === "monthly" ? reminderDayOfMonth : null,
+      });
+      toast.success("زمان‌بندی یادآوری ذخیره شد", {
+        description:
+          reminderFrequency === "daily"
+            ? "یادآوری روزانه در ساعت انتخاب‌شده ارسال می‌شود."
+            : reminderFrequency === "weekly"
+              ? "یادآوری هفتگی در روز و ساعت انتخاب‌شده ارسال می‌شود."
+              : "یادآوری ماهانه در روز و ساعت انتخاب‌شده ارسال می‌شود.",
+      });
+    } catch (error) {
+      toast.error("ذخیره تنظیمات یادآوری انجام نشد", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsSavingReminder(false);
+    }
+  };
+
 
   const copyText = async (
     text: string,
