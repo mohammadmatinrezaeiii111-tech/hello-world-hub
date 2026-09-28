@@ -14,6 +14,7 @@ import {
   Webhook,
 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { TimePicker } from "@/components/pm/TimePicker";
 import { PageHeader } from "@/components/pm/PmShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -403,13 +404,10 @@ function PmIntegrationsSettings() {
                 <label htmlFor="reminder_time" className="text-xs font-medium text-muted-foreground">
                   ساعت ارسال
                 </label>
-                <Input
+                <TimePicker
                   id="reminder_time"
-                  type="time"
-                  dir="ltr"
                   value={reminderTime}
-                  onChange={(event) => setReminderTime(event.target.value)}
-                  className="h-11 rounded-xl"
+                  onChange={setReminderTime}
                 />
               </div>
 
