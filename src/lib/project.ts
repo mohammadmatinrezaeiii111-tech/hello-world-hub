@@ -161,7 +161,13 @@ export async function createProject(input: {
 export function setActiveProject(project: Project) {
   setProjectCode(project.project_code);
   if (!isBrowser()) return;
-  localStorage.setItem(ACTIVE_PROJECT_STORAGE_KEY, JSON.stringify(project));
+  // get_project_by_code کد مدیر را برنمی‌گرداند؛ کد مدیر ذخیره‌شده قبلی همین پروژه حفظ شود.
+  const previous = getActiveProject();
+  const merged: Project =
+    !project.manager_code && previous?.project_code === project.project_code
+      ? { ...project, manager_code: previous.manager_code ?? null }
+      : project;
+  localStorage.setItem(ACTIVE_PROJECT_STORAGE_KEY, JSON.stringify(merged));
 }
 
 /** خواندن پروژه فعال از حافظه مرورگر */
