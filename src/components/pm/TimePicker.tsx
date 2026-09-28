@@ -134,8 +134,7 @@ function pad(n: number): string {
 }
 
 export function TimePicker({ value, onChange, id, disabled, className }: TimePickerProps) {
-  const [openState, setOpenState] = useState<true | false>(false);
-  const open = openState as boolean;
+  const [open, setOpen] = useState(false);
 
   const hours = useMemo(
     () => Array.from({ length: 24 }, (_, i) => pad(i)),
