@@ -152,7 +152,7 @@ export function TimePicker({ value, onChange, id, disabled, className }: TimePic
   const display = /^\d{1,2}:\d{1,2}$/.test(value ?? "") ? value : "08:00";
 
   return (
-    <Popover open={open} onOpenChange={setOpenState}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           type="button"
