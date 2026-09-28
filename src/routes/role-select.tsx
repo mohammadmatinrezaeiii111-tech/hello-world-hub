@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRole } from "@/context/RoleContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchProjectByCode, setActiveProject } from "@/lib/project";
+import { clearActiveProject, fetchProjectByCode, setActiveProject } from "@/lib/project";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/role-select")({
@@ -51,6 +51,7 @@ function AuthEntry() {
         return;
       }
 
+      clearActiveProject();
       setActiveProject(project);
       setRole("user");
       toast.success("کد پروژه تأیید شد", { description: `پروژه: ${project.project_name}` });
