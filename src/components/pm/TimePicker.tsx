@@ -177,7 +177,7 @@ export function TimePicker({ value, onChange, id, disabled, className }: TimePic
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault();
-            setOpenState(false);
+            setOpen(false);
           }
         }}
       >
@@ -188,7 +188,7 @@ export function TimePicker({ value, onChange, id, disabled, className }: TimePic
             value={pad(hour)}
             onSelect={(v) => emit(Number(v), minute)}
             onStep={(dir) => emit((hour + dir + 24) % 24, minute)}
-            onClose={() => setOpenState(false)}
+            onClose={() => setOpen(false)}
           />
           <WheelColumn
             label="دقیقه"
@@ -196,7 +196,7 @@ export function TimePicker({ value, onChange, id, disabled, className }: TimePic
             value={pad(minute)}
             onSelect={(v) => emit(hour, Number(v))}
             onStep={(dir) => emit(hour, ((minuteIndex + dir + 12) % 12) * 5)}
-            onClose={() => setOpenState(false)}
+            onClose={() => setOpen(false)}
           />
         </div>
       </PopoverContent>
