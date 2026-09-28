@@ -161,12 +161,19 @@ export async function createProject(input: {
 export function setActiveProject(project: Project) {
   setProjectCode(project.project_code);
   if (!isBrowser()) return;
-  // get_project_by_code کد مدیر را برنمی‌گرداند؛ کد مدیر ذخیره‌شده قبلی همین پروژه حفظ شود.
+  // get_project_by_code کد/نام مدیر را برنمی‌گرداند؛ مقادیر قبلی همین پروژه (مقایسه با id) حفظ شود.
   const previous = getActiveProject();
-  const merged: Project =
-    !project.manager_code && previous?.project_code === project.project_code
-      ? { ...project, manager_code: previous.manager_code ?? null }
-      : project;
+  const sameProject =
+    previous &&
+    ((project.id && previous.id === project.id) ||
+      (!project.id && previous.project_code === project.project_code));
+  const merged: Project = sameProject
+    ? {
+        ...project,
+        manager_code: project.manager_code || previous.manager_code || null,
+        manager_name: project.manager_name || previous.manager_name || null,
+      }
+    : project;
   localStorage.setItem(ACTIVE_PROJECT_STORAGE_KEY, JSON.stringify(merged));
 }
 

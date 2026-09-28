@@ -121,10 +121,14 @@ function PmIntegrationsSettings() {
       const project = getActiveProject();
       const code = project?.manager_code?.trim();
       if (!code) {
+        console.log(
+          "[reminder] manager_code missing. localStorage.active_project =",
+          localStorage.getItem("active_project"),
+        );
         if (!cancelled) {
           setReminderLoading(false);
           setReminderLoadError(
-            "کد ورود مدیر پروژه در دسترس نیست؛ برای تنظیم یادآوری با کد مدیر وارد شوید.",
+            "برای تنظیم یادآوری، یک بار از پنل خارج شوید و دوباره با کد مدیر (MGR-...) وارد شوید.",
           );
         }
         return;
