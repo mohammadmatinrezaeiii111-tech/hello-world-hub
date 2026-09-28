@@ -45,7 +45,7 @@ function ManagerLogin() {
         setErrorMessage("کد ورود مدیر یافت نشد. کد اختصاصی مدیر پروژه خود را بررسی کنید.");
         return;
       }
-      setActiveProject(project);
+      setActiveProject({ ...project, manager_code: trimmed });
       setRole("pm");
       toast.success("ورود مدیر تأیید شد", { description: `پروژه: ${project.project_name}` });
       navigate({ to: "/pm/dashboard" });
