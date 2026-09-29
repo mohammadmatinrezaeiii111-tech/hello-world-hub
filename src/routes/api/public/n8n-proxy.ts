@@ -3,16 +3,19 @@ import { createFileRoute } from "@tanstack/react-router";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, x-n8n-target",
+  "Access-Control-Allow-Headers": "Content-Type, x-n8n-workflow",
   "Access-Control-Max-Age": "86400",
 } as const;
 
-/** فقط آدرس‌های http/https پذیرفته می‌شوند */
-function parseTarget(raw: string | null): URL | null {
-  if (!raw) return null;
+const DEFAULT_N8N_WEBHOOK_URL = "https://n8n.example.com/webhook/projectyar-daily-reports";
+
+/** مقصد n8n به‌صورت مرکزی در محیط سرور تعریف می‌شود و از کاربر دریافت نمی‌شود. */
+function resolveTarget(workflow: string | null): URL | null {
+  const configuredUrl = process.env["N8N_WEBHOOK_URL"] ?? DEFAULT_N8N_WEBHOOK_URL;
   try {
-    const url = new URL(raw.trim());
+    const url = new URL(configuredUrl);
     if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    if (workflow === "variance") url.pathname = "/webhook/generate-variance-report";
     return url;
   } catch {
     return null;
@@ -26,11 +29,11 @@ export const Route = createFileRoute("/api/public/n8n-proxy")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS_HEADERS }),
 
       POST: async ({ request }) => {
-        const target = parseTarget(request.headers.get("x-n8n-target"));
+        const target = resolveTarget(request.headers.get("x-n8n-workflow"));
         if (!target) {
           return new Response(
-            JSON.stringify({ error: "آدرس وب‌هوک نامعتبر است." }),
-            { status: 400, headers: { "Content-Type": "application/json", ...CORS_HEADERS } },
+            JSON.stringify({ error: "اتصال خودکار سرویس تنظیم نشده است." }),
+            { status: 503, headers: { "Content-Type": "application/json", ...CORS_HEADERS } },
           );
         }
 

@@ -1,9 +1,8 @@
-/** کلیدهای ذخیره‌سازی محلی برای اتصال n8n و کد پروژه */
-export const WEBHOOK_STORAGE_KEY = "n8n_webhook_url";
+/** کلیدهای ذخیره‌سازی محلی تحلیل و کد پروژه */
 export const PROJECT_CODE_STORAGE_KEY = "project_code";
 export const ANALYSIS_STORAGE_KEY = "n8n_analysis_result";
 
-/** مسیر پروکسی سمت سرور (بدون محدودیت CORS) */
+/** مسیر ثابت و مرکزی همه درخواست‌های n8n؛ آدرس مقصد فقط در سرور تعیین می‌شود. */
 export const N8N_PROXY_PATH = "/api/public/n8n-proxy";
 
 /** هدرهای لازم برای عبور از صفحه هشدار ngrok */
@@ -51,16 +50,13 @@ function isBrowser() {
 
 /** ارسال درخواست به n8n همیشه از طریق پروکسی سمت سرور (بدون تلاش مستقیم از مرورگر). */
 export async function postToN8n(
-  rawUrl: string,
   body: BodyInit,
   contentType?: string,
+  workflow: "baseline" | "variance" = "baseline",
 ): Promise<N8nResult> {
-  const url = sanitizeWebhookUrl(rawUrl);
-  if (!url) throw new Error("آدرس وب‌هوک نامعتبر است. آدرس را با http:// یا https:// وارد کنید.");
+  console.info("[n8n] proxy request", { workflow, contentType });
 
-  console.info("[n8n] proxy request", { url, contentType });
-
-  const proxyHeaders: Record<string, string> = { "x-n8n-target": url };
+  const proxyHeaders: Record<string, string> = { "x-n8n-workflow": workflow };
   if (contentType) proxyHeaders["Content-Type"] = contentType;
 
   let response: Response;
@@ -137,16 +133,6 @@ export function getAnalysis(): N8nAnalysis | null {
   }
 }
 
-export function getWebhookUrl() {
-  if (!isBrowser()) return null;
-  return localStorage.getItem(WEBHOOK_STORAGE_KEY);
-}
-
-export function setWebhookUrl(url: string) {
-  if (!isBrowser()) return;
-  localStorage.setItem(WEBHOOK_STORAGE_KEY, sanitizeWebhookUrl(url) ?? url.trim());
-}
-
 export function getProjectCode() {
   if (!isBrowser()) return null;
   return localStorage.getItem(PROJECT_CODE_STORAGE_KEY);
@@ -221,20 +207,13 @@ export function normalizeFlexibleAnalysis(payload: unknown): N8nAnalysis | null 
 
 /** ارسال فایل بیس‌لاین به وب‌هوک n8n و دریافت تحلیل */
 export async function sendBaselineToN8n(file: File): Promise<N8nAnalysis> {
-  const webhookUrl = getWebhookUrl();
-  if (!webhookUrl) {
-    throw new Error(
-      "آدرس وب‌هوک n8n تنظیم نشده است. ابتدا در «تنظیمات یکپارچه‌سازی» آدرس وب‌هوک را وارد و تست کنید.",
-    );
-  }
-
   const projectCode = getProjectCode();
   const formData = new FormData();
   formData.append("file", file, file.name);
   formData.append("project_code", projectCode ?? "");
 
   // برای multipart نباید Content-Type دستی ست شود (boundary لازم است).
-  const result = await postToN8n(webhookUrl, formData);
+  const result = await postToN8n(formData);
 
   if (!result.ok) {
     throw new Error(`n8n با خطا پاسخ داد (کد ${result.status}). workflow را بررسی کنید.`);

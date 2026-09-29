@@ -24,13 +24,11 @@ import {
   getAnalysis,
   getProjectCode,
   getVariance,
-  getWebhookUrl,
   normalizeFlexibleAnalysis,
   saveAnalysis,
   saveVariance,
   type N8nAnalysis,
   postToN8n,
-  sanitizeWebhookUrl,
 } from "@/lib/n8n";
 import { toPersianDateString } from "@/lib/persian";
 import { supabase } from "@/lib/supabase";
@@ -49,22 +47,6 @@ export const Route = createFileRoute("/pm/analysis")({
   }),
   component: PmAnalysis,
 });
-
-/** آدرس وب‌هوک تولید گزارش انحرافات (پاک‌سازی‌شده) */
-function resolveVarianceWebhook() {
-  const fromEnv = import.meta.env["VITE_N8N_WEBHOOK_URL"] as string | undefined;
-  if (fromEnv) return sanitizeWebhookUrl(fromEnv);
-  const stored = getWebhookUrl();
-  if (!stored) return null;
-  const clean = sanitizeWebhookUrl(stored);
-  if (!clean) return null;
-  try {
-    const url = new URL(clean);
-    return `${url.origin}/webhook/generate-variance-report`;
-  } catch {
-    return null;
-  }
-}
 
 function hasContent(analysis: N8nAnalysis | null): analysis is N8nAnalysis {
   if (!analysis) return false;
@@ -283,22 +265,13 @@ function PmAnalysis() {
       setErrorMessage("کد پروژه یافت نشد. ابتدا از صفحه انتخاب نقش کد پروژه را وارد کنید.");
       return;
     }
-    const webhook = resolveVarianceWebhook();
-    if (!webhook) {
-      const message =
-        "آدرس وب‌هوک n8n تنظیم نشده است. ابتدا در «تنظیمات یکپارچه‌سازی» آدرس وب‌هوک را وارد و تست کنید.";
-      setErrorMessage(message);
-      toast.error("وب‌هوک تنظیم نشده است", { description: message });
-      return;
-    }
-
     setIsGenerating(true);
     setErrorMessage(null);
     try {
       const result = await postToN8n(
-        webhook,
         JSON.stringify({ project_code: projectCode }),
         "application/json",
+        "variance",
       );
       if (!result.ok) {
         throw new Error(`n8n با خطا پاسخ داد (کد ${result.status}). workflow را بررسی کنید.`);
