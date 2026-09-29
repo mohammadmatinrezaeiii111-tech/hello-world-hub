@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/pm/PmShell";
 import { toPersianDigits } from "@/lib/persian";
-import { getWebhookUrl, saveAnalysis, sendBaselineToN8n } from "@/lib/n8n";
+import { saveAnalysis, sendBaselineToN8n } from "@/lib/n8n";
 import { toast } from "sonner";
 
 
@@ -49,14 +49,6 @@ function PmUpload() {
     if (!file || isProcessing) return;
 
     setErrorMessage(null);
-
-    if (!getWebhookUrl()) {
-      const message =
-        "آدرس وب‌هوک n8n تنظیم نشده است. ابتدا در «تنظیمات یکپارچه‌سازی» آدرس وب‌هوک (ngrok) را وارد و تست کنید.";
-      setErrorMessage(message);
-      toast.error(message);
-      return;
-    }
 
     setIsProcessing(true);
     try {

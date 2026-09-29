@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Route all n8n requests through `/api/public/n8n-proxy`, with the target configured by server-side `N8N_WEBHOOK_URL`, so technical connection details never depend on user input or browser storage.

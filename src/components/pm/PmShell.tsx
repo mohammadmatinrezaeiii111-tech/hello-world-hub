@@ -25,7 +25,7 @@ const menu = [
   { title: "تحلیل انحرافات و AI", to: "/pm/analysis", icon: BrainCircuit },
   { title: "موانع فعال", to: "/pm/blockers", icon: AlertTriangle },
   { title: "مدیریت فعالیت‌ها", to: "/pm/tasks", icon: ListChecks },
-  { title: "تنظیمات یکپارچه‌سازی", to: "/pm/settings/integrations", icon: Settings2 },
+  { title: "زمان‌بندی یادآوری", to: "/pm/settings/integrations", icon: Settings2 },
 ] as const;
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
