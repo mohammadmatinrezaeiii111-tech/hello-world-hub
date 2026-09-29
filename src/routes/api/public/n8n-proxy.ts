@@ -7,7 +7,7 @@ const CORS_HEADERS = {
   "Access-Control-Max-Age": "86400",
 } as const;
 
-const DEFAULT_N8N_WEBHOOK_URL = "https://n8n.example.com/webhook/projectyar-daily-reports";
+const DEFAULT_N8N_WEBHOOK_URL = "https://oat-vessel-suffrage.ngrok-free.dev/webhook/upload-excel";
 
 /** مقصد n8n به‌صورت مرکزی در محیط سرور تعریف می‌شود و از کاربر دریافت نمی‌شود. */
 function resolveTarget(workflow: string | null): URL | null {
